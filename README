@@ -1,0 +1,4 @@
+# untar M3C source
+# remove directories "vignettes" and "build" from M3C folder
+# remove parallelisation from M3C()
+# run devtools::install("M3C")
