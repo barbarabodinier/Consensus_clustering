@@ -1,4 +1,4 @@
-for simul_study_id in $(seq 1 1 3)
+for simul_study_id in $(seq 4 1 4)
 do
 
 nrows=$(expr $(cat ../Simulation_parameters/Simulation_parameters_list_$simul_study_id.txt | wc -l) - 1)

@@ -1,6 +1,7 @@
 rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
+library(fake)
 library(sharp)
 library(igraph)
 library(randomcoloR)
@@ -11,17 +12,6 @@ library(diceR)
 library(ConsensusClusterPlus)
 library(M3C)
 library(abind)
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
@@ -34,7 +24,7 @@ simul <- SimulateClustering(
   nu_xc = 1,
   ev_xc = 0.5
 )
-x <- simul$data
+x <- scale(simul$data)
 par(mfrow = c(1, 1), mar = c(5, 5, 1, 6))
 Heatmap(as.matrix(dist(x)))
 

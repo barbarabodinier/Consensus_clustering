@@ -4,8 +4,8 @@ setwd("~/Dropbox/Consensus_clustering")
 library(openxlsx)
 
 # Simulation parameters
-method <- "hierarchical"
-for (simul_study_id in "1_100M3C") {
+method <- "pam"
+for (simul_study_id in c("1")) {
   print(paste0("Simulation study ", simul_study_id))
 
   # Template design
@@ -27,7 +27,7 @@ for (simul_study_id in "1_100M3C") {
   binary_metrics <- "signif"
   full_names <- c(
     "G*",
-    "Silhouette score",
+    "Silhouette",
     "GAP statistic",
     "G*",
     "Delta", "PAC",
@@ -40,8 +40,12 @@ for (simul_study_id in "1_100M3C") {
   )
   if (method == "hierarchical") {
     algo_names <- c("Hierarchical", "Consensus hierarchical")
-  } else {
+  }
+  if (method == "kmeans") {
     algo_names <- c("K-means", "Consensus K-means")
+  }
+  if (method == "pam") {
+    algo_names <- c("PAM", "Consensus PAM")
   }
   n_simul <- length(list.files(path = paste0("Results/HPC/Simulations_consensus_", method, "/Simulations_", simul_study_id)))
   mytable <- NULL
@@ -77,7 +81,7 @@ for (simul_study_id in "1_100M3C") {
   }
   # mytable <- rbind(mytable1, mytable2, mytable3)
   mytable <- cbind(rep(full_names[rownames(performances)], 3), mytable)
-  mytable=cbind(rep("", nrow(mytable)), mytable)
+  mytable <- cbind(rep("", nrow(mytable)), mytable)
 
   write.xlsx(as.data.frame(mytable), paste0("Tables/Simulations_consensus_", method, "/Table_performances_", simul_study_id, ".xlsx"),
     rowNames = FALSE, colNames = TRUE, overwrite = TRUE

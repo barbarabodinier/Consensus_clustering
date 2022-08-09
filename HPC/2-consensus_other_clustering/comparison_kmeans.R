@@ -1,3 +1,4 @@
+library(fake)
 library(sharp)
 library(aricode)
 library(M3C)
@@ -5,16 +6,6 @@ library(abind)
 library(cluster)
 
 setwd("../../")
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
@@ -84,8 +75,9 @@ simul <- SimulateClustering(
   nu_xc = nu_xc,
   output_matrices = TRUE
 )
+simul$data <- scale(simul$data)
 
-# Hierarchical clustering with G*
+# K means with G*
 tmptime <- system.time({
   set.seed(1)
   mykmeans <- stats::kmeans(x = simul$data, centers = length(n))
@@ -98,9 +90,8 @@ nperf <- c(
   time = as.numeric(tmptime[1])
 )
 
-# Hierarchical clustering with max silhouette score
-mydist <- dist(simul$data)
-silhouette <- SilhouetteScore(mydist)
+# K means with max silhouette score
+silhouette <- SilhouetteScore(x = simul$data, method = "kmeans")
 id <- ManualArgmaxId(silhouette)
 set.seed(1)
 mykmeans <- stats::kmeans(x = simul$data, centers = id)
@@ -115,7 +106,7 @@ nperf <- rbind(
   )
 )
 
-# K-means clustering with max GAP statistic
+# K means clustering with max GAP statistic
 tmptime <- system.time({
   out <- GapStatistic(xdata = simul$data, method = "kmeans")
 })
@@ -184,7 +175,7 @@ nperf <- rbind(
 
 # M3C score (PAC)
 tmptime2 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC", iters = iters)
+  scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC", iters = iters, method = "kmeans")
 })
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_pac)
@@ -200,7 +191,7 @@ nperf <- rbind(
 
 # M3C score (entropy)
 tmptime3 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy", iters = iters)
+  scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy", iters = iters, method = "kmeans")
 })
 rcsi_entropy <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_entropy)
@@ -233,10 +224,3 @@ rownames(nperf) <- c(
 
 # Saving output object
 saveRDS(nperf, paste0(filepath, "Performances_", simulation_id, ".rds"))
-
-# Saving Spearman's correlation
-spearman <- c(
-  rcsi_pac = cor(stab$Sc, rcsi_pac, method = "spearman", use = "complete.obs"),
-  rcsi_entropy = cor(stab$Sc, rcsi_entropy, method = "spearman", use = "complete.obs")
-)
-saveRDS(spearman, paste0(filepath, "Correlations_", simulation_id, ".rds"))

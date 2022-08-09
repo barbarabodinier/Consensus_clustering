@@ -1,6 +1,7 @@
 rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
+library(fake)
 library(sharp)
 library(igraph)
 library(randomcoloR)
@@ -13,17 +14,6 @@ library(M3C)
 library(abind)
 library(rCOSA)
 library(plotrix)
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
@@ -67,13 +57,14 @@ simul <- SimulateClustering(
   theta_xc = theta_xc,
   output_matrices = TRUE
 )
+simul$data <- scale(simul$data)
 
 # Heatmap of pairwise distances
 Heatmap(as.matrix(dist(simul$data)))
 
 stab <- Clustering(
   xdata = simul$data,
-  implementation = COSAClustering,
+  implementation = HierarchicalClustering,
   K = K,
   nc = 1:nc_max,
   Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = 10),
@@ -91,9 +82,9 @@ stab <- Clustering(
     widths = c(1, 2)
   )
   par(mar = c(5, 5, 1, 1))
-  CalibrationCurve(stab, xlab = "Number of clusters", ylab = "Consensus score")
+  CalibrationPlot(stab, xlab = "Number of clusters", ylab = "Consensus score")
   WeightBoxplot(stab,
-    at = simul$ev, col = ifelse(simul$theta_xc == 1, yes = "red", no = "grey"),
+    at = simul$ev, col = ifelse(theta_xc == 1, yes = "red", no = "grey"),
     frame = TRUE, boxwex = 0.007,
     xlab = "Proportion of explained variance",
     ylab = "Median weight"

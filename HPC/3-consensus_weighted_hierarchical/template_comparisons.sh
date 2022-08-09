@@ -5,11 +5,11 @@
 #PBS -q med-bio
 #PBS -J 1-1000
 
-cd /work/bbodinie/consensus_clustering/Scripts/1-consensus_hierarchical_clustering
+cd /work/bbodinie/consensus_clustering/Scripts/3-consensus_weighted_hierarchical
 module load anaconda3/personal
 
 simul_study_id={simul_study_id_input}
 params_id={params_id_input}
 seed=$PBS_ARRAY_INDEX
 
-Rscript comparison.R $simul_study_id $params_id $seed
+Rscript comparison_weighted.R $simul_study_id $params_id $seed

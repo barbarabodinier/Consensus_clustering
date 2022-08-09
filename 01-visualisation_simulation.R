@@ -1,6 +1,7 @@
 rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
+library(fake)
 library(sharp)
 library(igraph)
 library(randomcoloR)
@@ -8,17 +9,7 @@ library(colorspace)
 library(aricode)
 library(FactoMineR)
 library(corpcor)
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
+library(cluster)
 
 # Simulation of data with clusters
 set.seed(1)

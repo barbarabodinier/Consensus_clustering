@@ -86,7 +86,7 @@ for (simul_study_id in "4") {
   lambda_list <- formatC(as.numeric(performances[, "lambda", 1]), format = "f", digits = 2)
   full_names <- c(
     "'G*'",
-    "'Silhouette score'",
+    "'Silhouette'",
     "'GAP statistic'",
     "'G*'",
     "'Consensus score'",
@@ -101,7 +101,7 @@ for (simul_study_id in "4") {
     paste0("sparcl_star_", 1:n_lambda), "sparcl",
     paste0("cosa_star_", 1:n_lambda), "cosa"
   )
-  algo_names <- c("Hierarchical", "Hierarchical", "sparcl", "COSA")
+  algo_names <- c("Hierarchical", "Unweighted", "sparcl", "COSA")
   # Saving figure
   for (metric in c("F1_score")) {
     for (simul_id in 1:n_simul) {{ pdf(paste0("Figures/Simulations_consensus_", method, "/Boxplot_", metric, "_", simul_study_id, "_", simul_id, ".pdf"),

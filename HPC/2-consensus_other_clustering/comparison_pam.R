@@ -1,33 +1,23 @@
-rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
-
+library(fake)
 library(sharp)
 library(aricode)
 library(M3C)
 library(abind)
 library(cluster)
 
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
+setwd("../../")
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
 # Simulation study parameters
-simul_study_id <- 3
-params_id <- 1
-seed <- 2
+args <- commandArgs(trailingOnly = TRUE)
+simul_study_id <- as.numeric(args[1])
+params_id <- as.numeric(args[2])
+seed <- as.numeric(args[3])
 simulation_id <- paste0(params_id, "_", seed)
 
 # Extracting simulation parameters
-params_list <- read.table(paste0("Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
+params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
   sep = "\t", header = TRUE, stringsAsFactors = FALSE
 )
 
@@ -58,8 +48,8 @@ print(paste("Simulation ID:", simulation_id))
 
 # Creating folder of simulation study
 dir.create("Results", showWarnings = FALSE)
-dir.create("Results/Simulations_consensus_hierarchical", showWarnings = FALSE)
-filepath <- paste0("Results/Simulations_consensus_hierarchical/Simulations_", simul_study_id, "/")
+dir.create("Results/Simulations_consensus_pam", showWarnings = FALSE)
+filepath <- paste0("Results/Simulations_consensus_pam/Simulations_", simul_study_id, "/")
 dir.create(filepath, showWarnings = FALSE)
 print("Path to results:")
 print(filepath)
@@ -85,12 +75,13 @@ simul <- SimulateClustering(
   nu_xc = nu_xc,
   output_matrices = TRUE
 )
+simul$data <- scale(simul$data)
 
-# Hierarchical clustering with G*
+# Partitioning Around Medoids with G*
 tmptime <- system.time({
-  mydist <- dist(simul$data)
-  myhclust <- hclust(d = mydist, method = "complete")
-  myclusters <- cutree(myhclust, k = length(n))
+  set.seed(1)
+  mydistance <- stats::dist(x = simul$data, method = "euclidian")
+  myclusters <- cluster::pam(x = mydistance, k = length(n), diss = TRUE, cluster.only = TRUE)
 })
 nperf <- c(
   G = length(n),
@@ -99,10 +90,12 @@ nperf <- c(
   time = as.numeric(tmptime[1])
 )
 
-# Hierarchical clustering with max silhouette score
-silhouette <- SilhouetteScore(mydist, myhclust)
+# Partitioning Around Medoids with max silhouette score
+silhouette <- SilhouetteScore(x = simul$data, method = "pam")
 id <- ManualArgmaxId(silhouette)
-myclusters <- cutree(myhclust, k = id)
+set.seed(1)
+mydistance <- stats::dist(x = simul$data, method = "euclidian")
+myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
 nperf <- rbind(
   nperf,
   c(
@@ -113,13 +106,15 @@ nperf <- rbind(
   )
 )
 
-# Hierarchical clustering with max GAP statistic
+# Partitioning Around Medoids with max GAP statistic
 tmptime <- system.time({
-  out <- GapStatistic(xdata = simul$data)
+  out <- GapStatistic(xdata = simul$data, method = "pam")
 })
 gap <- out$gap
 id <- ManualArgmaxId(gap)
-myclusters <- cutree(myhclust, k = id)
+set.seed(1)
+mydistance <- stats::dist(x = simul$data, method = "euclidian")
+myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
 nperf <- rbind(
   nperf,
   c(
@@ -134,7 +129,7 @@ nperf <- rbind(
 tmptime <- system.time({
   stab <- Clustering(
     xdata = simul$data,
-    implementation = HierarchicalClustering,
+    implementation = PAMClustering,
     K = K,
     verbose = FALSE,
     nc = 1:nc_max,
@@ -180,7 +175,7 @@ nperf <- rbind(
 
 # M3C score (PAC)
 tmptime2 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC", iters = iters)
+  scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC", iters = iters, method = "pam")
 })
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_pac)
@@ -196,7 +191,7 @@ nperf <- rbind(
 
 # M3C score (entropy)
 tmptime3 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy", iters = iters)
+  scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy", iters = iters, method = "pam")
 })
 rcsi_entropy <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_entropy)
@@ -229,10 +224,3 @@ rownames(nperf) <- c(
 
 # Saving output object
 saveRDS(nperf, paste0(filepath, "Performances_", simulation_id, ".rds"))
-
-# Saving Spearman's correlation
-spearman <- c(
-  rcsi_pac = cor(stab$Sc, rcsi_pac, method = "spearman", use = "complete.obs"),
-  rcsi_entropy = cor(stab$Sc, rcsi_entropy, method = "spearman", use = "complete.obs")
-)
-saveRDS(spearman, paste0(filepath, "Correlations_", simulation_id, ".rds"))

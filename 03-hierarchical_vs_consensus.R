@@ -1,22 +1,12 @@
 rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
+library(fake)
 library(sharp)
 library(igraph)
 library(randomcoloR)
 library(colorspace)
 library(aricode)
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
 
 # # Simulation with perfect consensus clustering
 # set.seed(0)
@@ -26,16 +16,26 @@ for (k in 1:length(myfunctions)) {
 #                          nu_xc=1,
 #                          ev_xc=0.4)
 
+# # Simulation of data with clusters
+# set.seed(0)
+# n <- c(20, 50, 30)
+# simul <- SimulateClustering(
+#   n = n,
+#   pk = 20,
+#   nu_xc = 1,
+#   ev_xc = 0.3
+# )
+
 # Simulation of data with clusters
-set.seed(0)
+set.seed(1)
 n <- c(20, 50, 30)
 simul <- SimulateClustering(
   n = n,
-  pk = 20,
+  pk = 5,
   nu_xc = 1,
-  ev_xc = 0.3
+  ev_xc = 0.6
 )
-x <- simul$data
+x <- scale(simul$data)
 
 # Hierarchical clustering
 mydist <- as.matrix(dist(x))

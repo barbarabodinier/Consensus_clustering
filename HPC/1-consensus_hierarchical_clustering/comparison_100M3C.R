@@ -1,39 +1,29 @@
-rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
-
+library(fake)
 library(sharp)
 library(aricode)
 library(M3C)
 library(abind)
 library(cluster)
 
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-myfunctions <- myfunctions[myfunctions != "Former"]
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
+setwd("../../")
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
 # Simulation study parameters
-simul_study_id <- 1
-params_id <- 1
-seed <- 1
+args <- commandArgs(trailingOnly = TRUE)
+simul_study_id <- as.numeric(args[1])
+params_id <- as.numeric(args[2])
+seed <- as.numeric(args[3])
 simulation_id <- paste0(params_id, "_", seed)
 
 # Extracting simulation parameters
-params_list <- read.table(paste0("Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
+params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
   sep = "\t", header = TRUE, stringsAsFactors = FALSE
 )
 
 # Model parameters
 K <- 100
-iters <- 25 # default 25, recommended 5-100 (for M3C)
+iters <- 100 # default 25, recommended 5-100 (for M3C)
 nc_max <- 20 # maximum number of clusters
 
 # Extracting simulation parameters
@@ -58,8 +48,8 @@ print(paste("Simulation ID:", simulation_id))
 
 # Creating folder of simulation study
 dir.create("Results", showWarnings = FALSE)
-dir.create("Results/Simulations_consensus_kmeans", showWarnings = FALSE)
-filepath <- paste0("Results/Simulations_consensus_kmeans/Simulations_", simul_study_id, "/")
+dir.create("Results/Simulations_consensus_hierarchical", showWarnings = FALSE)
+filepath <- paste0("Results/Simulations_consensus_hierarchical/Simulations_", simul_study_id, "_100M3C/")
 dir.create(filepath, showWarnings = FALSE)
 print("Path to results:")
 print(filepath)
@@ -85,12 +75,13 @@ simul <- SimulateClustering(
   nu_xc = nu_xc,
   output_matrices = TRUE
 )
+simul$data <- scale(simul$data)
 
 # Hierarchical clustering with G*
 tmptime <- system.time({
-  set.seed(1)
-  mykmeans <- stats::kmeans(x = simul$data, centers = length(n))
-  myclusters <- mykmeans$cluster
+  mydist <- dist(simul$data)
+  myhclust <- hclust(d = mydist, method = "complete")
+  myclusters <- cutree(myhclust, k = length(n))
 })
 nperf <- c(
   G = length(n),
@@ -100,12 +91,9 @@ nperf <- c(
 )
 
 # Hierarchical clustering with max silhouette score
-mydist <- dist(simul$data)
-silhouette <- SilhouetteScore(mydist)
+silhouette <- SilhouetteScore(x = simul$data, method = "hclust")
 id <- ManualArgmaxId(silhouette)
-set.seed(1)
-mykmeans <- stats::kmeans(x = simul$data, centers = id)
-myclusters <- mykmeans$cluster
+myclusters <- cutree(myhclust, k = id)
 nperf <- rbind(
   nperf,
   c(
@@ -116,15 +104,13 @@ nperf <- rbind(
   )
 )
 
-# K-means clustering with max GAP statistic
+# Hierarchical clustering with max GAP statistic
 tmptime <- system.time({
-  out <- GapStatistic(xdata = simul$data, method = "kmeans")
+  out <- GapStatistic(xdata = simul$data, method = "hclust")
 })
 gap <- out$gap
 id <- ManualArgmaxId(gap)
-set.seed(1)
-mykmeans <- stats::kmeans(x = simul$data, centers = id)
-myclusters <- mykmeans$cluster
+myclusters <- cutree(myhclust, k = id)
 nperf <- rbind(
   nperf,
   c(
@@ -139,7 +125,7 @@ nperf <- rbind(
 tmptime <- system.time({
   stab <- Clustering(
     xdata = simul$data,
-    implementation = KMeansClustering,
+    implementation = HierarchicalClustering,
     K = K,
     verbose = FALSE,
     nc = 1:nc_max,
@@ -234,10 +220,3 @@ rownames(nperf) <- c(
 
 # Saving output object
 saveRDS(nperf, paste0(filepath, "Performances_", simulation_id, ".rds"))
-
-# Saving Spearman's correlation
-spearman <- c(
-  rcsi_pac = cor(stab$Sc, rcsi_pac, method = "spearman", use = "complete.obs"),
-  rcsi_entropy = cor(stab$Sc, rcsi_entropy, method = "spearman", use = "complete.obs")
-)
-saveRDS(spearman, paste0(filepath, "Correlations_", simulation_id, ".rds"))

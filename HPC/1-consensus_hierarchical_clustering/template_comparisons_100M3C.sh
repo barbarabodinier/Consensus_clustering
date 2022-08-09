@@ -3,13 +3,13 @@
 #PBS -l select=1:ncpus=1:mem=5gb
 #PBS -N simul_comp
 #PBS -q med-bio
-#PBS -J 1-100
+#PBS -J 1-1000
 
 cd /work/bbodinie/consensus_clustering/Scripts/1-consensus_hierarchical_clustering
 module load anaconda3/personal
 
-simul_study_id=1
-params_id=60
+simul_study_id={simul_study_id_input}
+params_id={params_id_input}
 seed=$PBS_ARRAY_INDEX
 
-Rscript comparison.R $simul_study_id $params_id $seed
+Rscript comparison_100M3C.R $simul_study_id $params_id $seed

@@ -1,3 +1,4 @@
+library(fake)
 library(sharp)
 library(aricode)
 library(M3C)
@@ -7,16 +8,6 @@ library(sparcl)
 library(rCOSA)
 
 setwd("../../")
-
-# Exporting all functions from sharp (including internal ones)
-r <- unclass(lsf.str(envir = asNamespace("sharp"), all = T))
-for (name in r) eval(parse(text = paste0(name, "<-sharp:::", name)))
-
-# Loading all additional functions
-myfunctions <- list.files("Scripts/Functions/")
-for (k in 1:length(myfunctions)) {
-  source(paste0("Scripts/Functions/", myfunctions[k]))
-}
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
@@ -90,6 +81,7 @@ simul <- SimulateClustering(
   theta_xc = theta_xc,
   output_matrices = TRUE
 )
+simul$data <- scale(simul$data)
 
 # Hierarchical clustering with G*
 tmptime <- system.time({
@@ -107,7 +99,7 @@ nperf <- c(
 )
 
 # Hierarchical clustering with max silhouette score
-silhouette <- SilhouetteScore(mydist, myhclust)
+silhouette <- SilhouetteScore(x = simul$data, method = "hclust")
 id <- ManualArgmaxId(silhouette)
 myclusters <- cutree(myhclust, k = id)
 nperf <- rbind(
@@ -124,7 +116,7 @@ nperf <- rbind(
 
 # Hierarchical clustering with max GAP statistic
 tmptime <- system.time({
-  out <- GapStatistic(xdata = simul$data)
+  out <- GapStatistic(xdata = simul$data, method = "hclust")
 })
 gap <- out$gap
 id <- ManualArgmaxId(gap)
@@ -216,7 +208,10 @@ for (argmax_id in which(stab$nc == length(n))) {
   names(selected) <- colnames(stab$Beta)
   selected[rownames(tmp)[1:q]] <- 1
   selperf <- rbind(
-    selperf, SelectionPerformance(theta = selected, theta_star = simul$theta_xc)
+    selperf, SelectionPerformance(
+      theta = selected,
+      theta_star = theta_xc
+    )
   )
 }
 
@@ -243,14 +238,17 @@ selected <- rep(0, ncol(stab$Beta))
 names(selected) <- colnames(stab$Beta)
 selected[rownames(tmp)[1:q]] <- 1
 selperf <- rbind(
-  selperf, SelectionPerformance(theta = selected, theta_star = simul$theta_xc)
+  selperf, SelectionPerformance(
+    theta = selected,
+    theta_star = theta_xc
+  )
 )
 
 # Consensus clustering (cosa)
 tmptime <- system.time({
   stab <- Clustering(
     xdata = simul$data,
-    implementation = COSAClustering,
+    implementation = HierarchicalClustering,
     K = K,
     verbose = FALSE,
     nc = 1:nc_max,
@@ -282,7 +280,10 @@ for (argmax_id in which(stab$nc == length(n))) {
   names(selected) <- colnames(stab$Beta)
   selected[names(sort(median_weights, decreasing = TRUE))[1:q]] <- 1
   selperf <- rbind(
-    selperf, SelectionPerformance(theta = selected, theta_star = simul$theta_xc)
+    selperf, SelectionPerformance(
+      theta = selected,
+      theta_star = theta_xc
+    )
   )
 }
 
@@ -306,7 +307,10 @@ selected <- rep(0, ncol(stab$Beta))
 names(selected) <- colnames(stab$Beta)
 selected[names(sort(median_weights, decreasing = TRUE))[1:q]] <- 1
 selperf <- rbind(
-  selperf, SelectionPerformance(theta = selected, theta_star = simul$theta_xc)
+  selperf, SelectionPerformance(
+    theta = selected,
+    theta_star = theta_xc
+  )
 )
 
 # Re-formatting output objects

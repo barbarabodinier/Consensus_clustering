@@ -1,7 +1,0 @@
-library(diceR)
-library(M3C)
-library(ConsensusClustering)
-library(ConsensusClusterPlus)
-library(coca)
-library(cola)
-library(yaConsensus)
