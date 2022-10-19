@@ -16,13 +16,26 @@ library(abind)
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
 # Simulation of data with clusters
-set.seed(0)
-n <- c(20, 50, 30, 10, 40)
+n_tot=150
+p=10
+n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
+pk <- round(rep(0.2, 5) * p)
+ev_xc=0.5
+v_min=v_max=0
+nu_xc=1
+set.seed(1)
 simul <- SimulateClustering(
   n = n,
-  pk = 20,
-  nu_xc = 1,
-  ev_xc = 0.5
+  pk = pk,
+  ev_xc = ev_xc,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue",
+  nu_xc = nu_xc,
+  output_matrices = TRUE
 )
 x <- scale(simul$data)
 par(mfrow = c(1, 1), mar = c(5, 5, 1, 6))

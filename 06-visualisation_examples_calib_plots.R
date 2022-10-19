@@ -40,8 +40,9 @@ for (simul_study_id in 1) {
     layout(matrix(seq(1, 6 * 5), byrow = FALSE, ncol = 5))
     par(mar = c(5, 5, 1, 6))
     for (ev_xc in seq(0.7, 0.3, by = -0.1)) {
+      print(ev_xc)
       # Data simulation
-      set.seed(0)
+      set.seed(4)
       n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
       pk <- round(rep(0.2, 5) * p)
       simul <- SimulateClustering(

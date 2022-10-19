@@ -10,7 +10,6 @@ library(annotate)
 library(hgu95a.db)
 # library(sharp)
 devtools::load_all("/Users/barbara/Dropbox/R_packages/Stability/sharp")
-devtools::load_all("/Users/barbara/Dropbox/R_packages/Stability/fake")
 
 # Parameters
 tau <- 0.5
@@ -114,7 +113,7 @@ cluster_colours <- lighten(c("tomato", "dodgerblue", "seagreen4", "tan"), amount
   )
   myhclust$height[length(myhclust$height) - nc_star + c(0, 1)]
   abline(
-    h = mean(myhclust$height[length(myhclust$height) - nc_star + c(0, 1)]),
+    h = mean(myhclust$height[length(myhclust$height) - nc_star + c(1, 2)]),
     lty = 2, col = "darkred"
   )
   ordered <- cutree(myhclust, k = nc_star)[myhclust$order]
