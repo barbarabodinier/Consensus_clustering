@@ -1,9 +1,9 @@
-SilhouetteScore <- function(x, nc_max = 20, method = "hclust") {
+SilhouetteScore <- function(x, nc_max = 20, method = "hclust", linkage="complete") {
   dist <- dist(x, method = "euclidian")
   score <- rep(NA, nc_max)
 
   if (method == "hclust") {
-    hclust <- hclust(d = dist, method = "complete")
+    hclust <- hclust(d = dist, method = linkage)
     for (k in 2:nc_max) {
       myclusters <- cutree(hclust, k = k)
       mysilhouette <- silhouette(x = myclusters, dist = dist)

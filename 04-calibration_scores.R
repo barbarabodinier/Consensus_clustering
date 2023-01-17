@@ -24,16 +24,18 @@ ev_xc=0.5
 v_min=v_max=0
 nu_xc=1
 set.seed(1)
+sigma=SimulateCorrelation(pk=pk,
+                          nu_within = 1,
+                          nu_between = 0,
+                          v_within = c(v_min, v_max),
+                          v_between = 0,
+                          v_sign = -1,
+                          pd_strategy = "min_eigenvalue")$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
+  sigma=sigma,
   ev_xc = ev_xc,
-  nu_within = 1,
-  nu_between = 0,
-  v_within = c(v_min, v_max),
-  v_between = 0,
-  v_sign = -1,
-  pd_strategy = "min_eigenvalue",
   nu_xc = nu_xc,
   output_matrices = TRUE
 )

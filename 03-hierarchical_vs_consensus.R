@@ -126,6 +126,7 @@ g <- Graph(Abig, weighted = TRUE)
 V(g)$label <- gsub("h", "", gsub("sh", "", V(g)$label))
 V(g)$color <- mycolours[simul$theta[as.numeric(V(g)$label)]]
 V(g)$size <- 6
+V(g)$label.cex=0.5
 V(g)$frame.color <- V(g)$color
 V(g)$label.color <- darken(V(g)$color, amount = 0.5)
 E(g)$color <- myedgecolours[E(g)$width]
