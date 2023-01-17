@@ -124,8 +124,8 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
     if (silent != TRUE){
       message('running simulations...')
     }
-    # cl <- makeCluster(cores)
-    # registerDoSNOW(cl)
+    cl <- makeCluster(cores)
+    registerDoSNOW(cl)
     invisible(capture.output(pb <- txtProgressBar(min = 0, max = iters, style = 3)))
     progress <- function(n) setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
@@ -149,61 +149,35 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
       }
     }
     ## for each loop to use all cores
-    ls=NULL
-    for (i in 1:iters){
-      if (is.null(seed) == FALSE){
-        set.seed(i)
-      }
-      
-      if (ref_method == 'reverse-pca'){ # reverse PCA method
-        simulated_data <- matrix(rnorm(c*c, mean = 0, sd = sds),nrow = c, ncol = c, byrow = TRUE)
-        null_dataset <- t(t(simulated_data %*% t(pca1$rotation)) + pca1$center) # go back to null distrib
-        mydata2 <- t(as.data.frame(null_dataset))
-      }else if (ref_method == 'chol') { # cholesky method
-        newdata <- matrix(rnorm(c*r), c, r) %*% chol(covm)
-        mydata2<- as.data.frame(t(newdata))
-      }
-      
-      m_matrix <- as.matrix(mydata2)
-      results <- M3Cref(m_matrix,maxK=maxK,reps=repsref,pItem=pItem,pFeature=1,
-                        clusterAlg=clusteralg, # use pam it is fast
-                        distance=distance, # with pam always use euclidean
-                        title = '/home/christopher/Desktop/',
-                        x1=pacx1, x2=pacx2, seed=seed,
-                        silent=silent, objective=objective)
-      pacresults <- results$pac_scores$PAC_SCORE
-      ls=rbind(ls, pacresults)
-    }
-
-    # ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref","entropy",
-    #                                    "sampleCols", "triangle", "rbfkernel"),
-    #             .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
-    #               
-    #               if (is.null(seed) == FALSE){
-    #                 set.seed(i)
-    #               }
-    #               
-    #               if (ref_method == 'reverse-pca'){ # reverse PCA method
-    #                 simulated_data <- matrix(rnorm(c*c, mean = 0, sd = sds),nrow = c, ncol = c, byrow = TRUE)
-    #                 null_dataset <- t(t(simulated_data %*% t(pca1$rotation)) + pca1$center) # go back to null distrib
-    #                 mydata2 <- t(as.data.frame(null_dataset))
-    #               }else if (ref_method == 'chol') { # cholesky method
-    #                 newdata <- matrix(rnorm(c*r), c, r) %*% chol(covm)
-    #                 mydata2<- as.data.frame(t(newdata))
-    #               }
-    #               
-    #               m_matrix <- as.matrix(mydata2)
-    #               results <- M3Cref(m_matrix,maxK=maxK,reps=repsref,pItem=pItem,pFeature=1,
-    #                                 clusterAlg=clusteralg, # use pam it is fast
-    #                                 distance=distance, # with pam always use euclidean
-    #                                 title = '/home/christopher/Desktop/',
-    #                                 x1=pacx1, x2=pacx2, seed=seed,
-    #                                 silent=silent, objective=objective)
-    #               pacresults <- results$pac_scores$PAC_SCORE
-    #               return(pacresults)
-    #             }
-    # close(pb)
-    # stopCluster(cl)
+    ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref","entropy",
+                                       "sampleCols", "triangle", "rbfkernel"),
+                .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
+                  
+                  if (is.null(seed) == FALSE){
+                    set.seed(i)
+                  }
+                  
+                  if (ref_method == 'reverse-pca'){ # reverse PCA method
+                    simulated_data <- matrix(rnorm(c*c, mean = 0, sd = sds),nrow = c, ncol = c, byrow = TRUE)
+                    null_dataset <- t(t(simulated_data %*% t(pca1$rotation)) + pca1$center) # go back to null distrib
+                    mydata2 <- t(as.data.frame(null_dataset))
+                  }else if (ref_method == 'chol') { # cholesky method
+                    newdata <- matrix(rnorm(c*r), c, r) %*% chol(covm)
+                    mydata2<- as.data.frame(t(newdata))
+                  }
+                  
+                  m_matrix <- as.matrix(mydata2)
+                  results <- M3Cref(m_matrix,maxK=maxK,reps=repsref,pItem=pItem,pFeature=1,
+                                    clusterAlg=clusteralg, # use pam it is fast
+                                    distance=distance, # with pam always use euclidean
+                                    title = '/home/christopher/Desktop/',
+                                    x1=pacx1, x2=pacx2, seed=seed,
+                                    silent=silent, objective=objective)
+                  pacresults <- results$pac_scores$PAC_SCORE
+                  return(pacresults)
+                }
+    close(pb)
+    stopCluster(cl)
     if (silent != TRUE){
       message('done.')
     }
