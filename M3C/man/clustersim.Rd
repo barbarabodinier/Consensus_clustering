@@ -4,8 +4,7 @@
 \alias{clustersim}
 \title{clustersim: A cluster simulator for testing clustering algorithms}
 \usage{
-clustersim(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE,
-  seed = NULL)
+clustersim(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, seed = NULL)
 }
 \arguments{
 \item{n}{Numerical value: The number of samples, it must be square rootable}

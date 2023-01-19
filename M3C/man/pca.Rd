@@ -4,13 +4,28 @@
 \alias{pca}
 \title{pca: A principal component analysis function}
 \usage{
-pca(mydata, printres = FALSE, labels = FALSE, text = FALSE,
-  axistextsize = 18, legendtextsize = 18, dotsize = 5,
-  textlabelsize = 4, legendtitle = "Group", controlscale = FALSE,
-  scale = 1, low = "grey", high = "red", colvec = c("skyblue",
-  "gold", "violet", "darkorchid", "slateblue", "forestgreen", "violetred",
-  "orange", "midnightblue", "grey31", "black"), printheight = 20,
-  printwidth = 22, pcx = 1, pcy = 2, scaler = FALSE)
+pca(
+  mydata,
+  printres = FALSE,
+  labels = FALSE,
+  text = FALSE,
+  axistextsize = 18,
+  legendtextsize = 18,
+  dotsize = 5,
+  textlabelsize = 4,
+  legendtitle = "Group",
+  controlscale = FALSE,
+  scale = 1,
+  low = "grey",
+  high = "red",
+  colvec = c("skyblue", "gold", "violet", "darkorchid", "slateblue", "forestgreen",
+    "violetred", "orange", "midnightblue", "grey31", "black"),
+  printheight = 20,
+  printwidth = 22,
+  pcx = 1,
+  pcy = 2,
+  scaler = FALSE
+)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: if dataframe/matrix should have samples as columns and rows as features}

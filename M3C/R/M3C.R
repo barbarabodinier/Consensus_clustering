@@ -18,6 +18,8 @@
 #' @param repsref Numerical value: how many resampling reps to use for reference (default: 100, recommended: 100-250)
 #' @param repsreal Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)
 #' @param clusteralg String: dictates which inner clustering algorithm to use (default: PAM)
+#' @param innerLinkage String: dictates which linkage to use for hierarchical clustering on subsamples
+#' @param finalLinkage String: dictates which linkage to use for final hierarchical clustering
 #' @param pacx1 Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)
 #' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)
 #' @param removeplots Logical flag: whether to remove all plots from view
@@ -44,11 +46,11 @@
 #' res <- M3C(mydata)
 M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
-                clusteralg = c('pam', 'km', 'spectral', 'hc'), pacx1 = 0.1, 
-                pacx2 = 0.9, seed=123, objective='entropy', removeplots = FALSE,
+                clusteralg = c('pam', 'km', 'spectral', 'hc'), 
+                innerLinkage="ward.D2", finalLinkage="complete",
+                pacx1 = 0.1, pacx2 = 0.9, seed=123, objective='entropy', removeplots = FALSE,
                 silent = FALSE, fsize = 18, method = 1, lambdadefault = 0.1, tunelambda = TRUE,
                 lseq = seq(0.02,0.1,by=0.02), lthick=2, dotsize=3){
-  
   if (is.null(seed) == FALSE){
     set.seed(seed)
   }
@@ -65,6 +67,7 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
   
   if (silent != TRUE){
     message('***M3C***')
+    message('BB: added arguments for linkage')
     if (method == 1){
       message('method: Monte Carlo simulation')
     }else if (method == 2){
@@ -124,8 +127,8 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
     if (silent != TRUE){
       message('running simulations...')
     }
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
+    # cl <- makeCluster(cores) # BB: commented out
+    # registerDoSNOW(cl) # BB: commented out
     invisible(capture.output(pb <- txtProgressBar(min = 0, max = iters, style = 3)))
     progress <- function(n) setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
@@ -148,10 +151,11 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
         covm <- cov(t(mydata))
       }
     }
-    ## for each loop to use all cores
+    ## for each loop to use all cores 
+    # BB: %dopar% to %do% 
     ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref","entropy",
                                        "sampleCols", "triangle", "rbfkernel"),
-                .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
+                .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %do% {
                   
                   if (is.null(seed) == FALSE){
                     set.seed(i)
@@ -171,13 +175,14 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
                                     clusterAlg=clusteralg, # use pam it is fast
                                     distance=distance, # with pam always use euclidean
                                     title = '/home/christopher/Desktop/',
+                                    innerLinkage = innerLinkage, 
                                     x1=pacx1, x2=pacx2, seed=seed,
                                     silent=silent, objective=objective)
                   pacresults <- results$pac_scores$PAC_SCORE
                   return(pacresults)
                 }
-    close(pb)
-    stopCluster(cl)
+    # close(pb) # BB: commented out
+    # stopCluster(cl) # BB: commented out
     if (silent != TRUE){
       message('done.')
     }
@@ -187,6 +192,7 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
                         clusterAlg=clusteralg, # use pam it is fast
                         distance=distance, # with pam always use euclidean
                         title = '/home/christopher/Desktop/',
+                        innerLinkage = innerLinkage, finalLinkage = finalLinkage,
                         des = des, lthick=lthick, dotsize=dotsize,
                         x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots, silent=silent,
                         fsize=fsize,method=method, objective=objective) # png to file
@@ -296,6 +302,7 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
                         clusterAlg=clusteralg, # default = pam, others = hc, km
                         distance=distance, # seed=1262118388.71279,
                         title = '/home/christopher/Desktop/',
+                        innerLinkage = innerLinkage, finalLinkage = finalLinkage,
                         x1=pacx1, x2=pacx2,
                         des = des,lthick=lthick, dotsize=dotsize,
                         seed=seed, removeplots=removeplots, 
@@ -411,8 +418,8 @@ M3Creal <- function( d=NULL, # function for real data
                      pFeature=1,
                      clusterAlg="hc",
                      title="untitled_consensus_cluster",
-                     innerLinkage="average",
-                     finalLinkage="average",
+                     innerLinkage="ward.D2",
+                     finalLinkage="complete",
                      distance="pearson",
                      ml=NULL,
                      tmyPal=NULL,
@@ -539,8 +546,7 @@ M3Cref <- function( d=NULL, # function for reference data
                     pFeature=1,
                     clusterAlg="hc",
                     title="untitled_consensus_cluster",
-                    innerLinkage="average",
-                    finalLinkage="average",
+                    innerLinkage="ward.D2",
                     distance="pearson",
                     ml=NULL,
                     tmyPal=NULL,
@@ -584,7 +590,7 @@ ccRun <- function( d=d,
                    diss=inherits( d, "dist" ),
                    pItem=NULL,
                    pFeature=NULL,
-                   innerLinkage=NULL,
+                   innerLinkage="ward.D2",
                    distance=NULL, #ifelse( inherits(d,"dist"), attr( d, "method" ), "euclidean" ),@@@@@
                    clusterAlg=NULL,
                    weightsItem=NULL,
@@ -672,7 +678,8 @@ ccRun <- function( d=d,
         this_assignment <- res$cluster
         names(this_assignment) <- colnames(affinitymatrix)
       }else if (clusterAlg == 'hc'){
-        this_cluster <- hclust( this_dist, method='ward.D2')
+        # this_cluster <- hclust( this_dist, method='ward.D2')
+        this_cluster <- hclust( this_dist, method=innerLinkage)
         this_assignment <- cutree(this_cluster,k)
       }
       ml[[k]] <- connectivityMatrix(this_assignment,ml[[k]],sample_x[[3]])

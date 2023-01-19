@@ -10,6 +10,9 @@ library(aricode)
 library(FactoMineR)
 library(diceR)
 library(ConsensusClusterPlus)
+library(doSNOW)
+library(foreach)
+library(ggplot2)
 library(M3C)
 library(abind)
 
@@ -65,6 +68,10 @@ pac <- PAC(stab)
 plot(pac)
 which.min(pac)
 
+# PINS discrepancy score
+discrepancy <- PINSDiscrepancy(x = simul$data, stab)
+which.max(discrepancy)
+
 # M3C score (PAC)
 scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC")
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
@@ -80,17 +87,27 @@ which.max(rcsi_entropy)
 # Clustering performances for different numbers of clusters
 perf <- AllPerf(stab)
 
-# Figure
+# Figures
+{
+  pdf("Figures/Score_vs_performance_simul.pdf",
+      width = 6, height = 6
+  )
+  par(mar = rep(5, 4))
+  Heatmap(as.matrix(dist(x)))
+  dev.off()
+}
+
 {
   pdf("Figures/Score_vs_performance.pdf",
-    width = 12, height = 7
+    width = 11, height = 7
   )
   par(mfrow = c(2, 3))
-  par(mar = c(5, 5, 0.5, 4))
-  Heatmap(as.matrix(dist(x)))
+  # par(mar = c(5, 5, 0.5, 4))
+  # Heatmap(as.matrix(dist(x)))
   par(mar = c(5, 5, 0.5, 0.5))
   ScatterPerf(x = delta, perf = perf, xlab = expression(Delta))
   ScatterPerf(x = -pac, perf = perf, xlab = "- PAC")
+  ScatterPerf(x = discrepancy, perf = perf, xlab = "PINS discrepancy")
   ScatterPerf(x = rcsi_pac, perf = perf, xlab = "RCSI (PAC)")
   ScatterPerf(x = rcsi_entropy, perf = perf, xlab = "RCSI (entropy)")
   ScatterPerf(x = stab$Sc, perf = perf, xlab = "Consensus score")

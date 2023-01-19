@@ -4,13 +4,26 @@
 \alias{umap}
 \title{umap: A umap function}
 \usage{
-umap(mydata, labels = FALSE, printres = FALSE, seed = FALSE,
-  axistextsize = 18, legendtextsize = 18, dotsize = 5,
-  textlabelsize = 4, legendtitle = "Group", controlscale = FALSE,
-  scale = 1, low = "grey", high = "red", colvec = c("skyblue",
-  "gold", "violet", "darkorchid", "slateblue", "forestgreen", "violetred",
-  "orange", "midnightblue", "grey31", "black"), printheight = 20,
-  printwidth = 22, text = FALSE)
+umap(
+  mydata,
+  labels = FALSE,
+  printres = FALSE,
+  seed = FALSE,
+  axistextsize = 18,
+  legendtextsize = 18,
+  dotsize = 5,
+  textlabelsize = 4,
+  legendtitle = "Group",
+  controlscale = FALSE,
+  scale = 1,
+  low = "grey",
+  high = "red",
+  colvec = c("skyblue", "gold", "violet", "darkorchid", "slateblue", "forestgreen",
+    "violetred", "orange", "midnightblue", "grey31", "black"),
+  printheight = 20,
+  printwidth = 22,
+  text = FALSE
+)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: if dataframe/matrix should have samples as columns and rows as features}

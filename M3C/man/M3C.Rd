@@ -4,13 +4,33 @@
 \alias{M3C}
 \title{M3C: Monte Carlo Reference-based Consensus Clustering}
 \usage{
-M3C(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
-  des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
-  repsreal = 100, clusteralg = c("pam", "km", "spectral", "hc"),
-  pacx1 = 0.1, pacx2 = 0.9, seed = 123, objective = "entropy",
-  removeplots = FALSE, silent = FALSE, fsize = 18, method = 1,
-  lambdadefault = 0.1, tunelambda = TRUE, lseq = seq(0.02, 0.1, by =
-  0.02), lthick = 2, dotsize = 3)
+M3C(
+  mydata,
+  cores = 1,
+  iters = 25,
+  maxK = 10,
+  pItem = 0.8,
+  des = NULL,
+  ref_method = c("reverse-pca", "chol"),
+  repsref = 100,
+  repsreal = 100,
+  clusteralg = c("pam", "km", "spectral", "hc"),
+  innerLinkage = "ward.D2",
+  finalLinkage = "complete",
+  pacx1 = 0.1,
+  pacx2 = 0.9,
+  seed = 123,
+  objective = "entropy",
+  removeplots = FALSE,
+  silent = FALSE,
+  fsize = 18,
+  method = 1,
+  lambdadefault = 0.1,
+  tunelambda = TRUE,
+  lseq = seq(0.02, 0.1, by = 0.02),
+  lthick = 2,
+  dotsize = 3
+)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -32,6 +52,10 @@ M3C(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
 \item{repsreal}{Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)}
 
 \item{clusteralg}{String: dictates which inner clustering algorithm to use (default: PAM)}
+
+\item{innerLinkage}{String: dictates which linkage to use for hierarchical clustering on subsamples}
+
+\item{finalLinkage}{String: dictates which linkage to use for final hierarchical clustering}
 
 \item{pacx1}{Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)}
 

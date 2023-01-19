@@ -1,11 +1,9 @@
 library(fake)
-library(sharp)
-library(aricode)
-library(M3C)
-library(abind)
-library(cluster)
-library(sparcl)
 library(rCOSA)
+library(sharp)
+library(abind)
+library(sparcl)
+library(cluster)
 
 setwd("../../")
 
@@ -68,16 +66,18 @@ if (equal_size) {
 pk <- round(rep(0.2, 5) * p)
 q <- round(nu_xc * p)
 theta_xc <- c(rep(1, q), rep(0, p - q))
+sigma=SimulateCorrelation(pk=pk,
+                          nu_within = 1,
+                          nu_between = 0,
+                          v_within = c(v_min, v_max),
+                          v_between = 0,
+                          v_sign = -1,
+                          pd_strategy = "min_eigenvalue")$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
+  sigma=sigma,
   ev_xc = ev_xc,
-  nu_within = 1,
-  nu_between = 0,
-  v_within = c(v_min, v_max),
-  v_between = 0,
-  v_sign = -1,
-  pd_strategy = "min_eigenvalue",
   theta_xc = theta_xc,
   output_matrices = TRUE
 )

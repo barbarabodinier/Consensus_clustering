@@ -159,7 +159,7 @@ mycolours <- darken(c("tan", "royalblue", "gold", "tomato", "darkolivegreen"), a
     mat = matrix(1:6, byrow = TRUE, nrow = 3),
     widths = c(1, 3)
   )
-  for (seed in 1) {
+  for (seed in 18) {
     set.seed(seed)
     n <- c(20, 50, 30, 10, 40)
     p <- 5

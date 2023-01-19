@@ -17,6 +17,7 @@ noit <- 20
 niter <- 10
 max_nc <- 20
 distance <- "euclidian"
+linkage <- "complete"
 
 # Loading and preparing the data
 mydata <- fread("Data/Lung_cancer/fig1tree.cdt.tsv", data.table = FALSE)
@@ -61,7 +62,7 @@ samples$Summary.Stage[which(samples$Summary.Stage == "NA-")] <- NA
 samples$Summary.Stage[which(samples$Summary.Stage == "I")] <- NA
 
 # Hierarchical clustering
-myhclust <- hclust(d = dist(scale(x), method = distance), method = "complete")
+myhclust <- hclust(d = dist(scale(x), method = distance), method = linkage)
 dend <- as.dendrogram(myhclust)
 labels_colors(dend) <- subtypes[labels(dend)]
 
@@ -71,8 +72,10 @@ stab_unw <- Clustering(
   nc = 1:max_nc,
   distance = distance,
   implementation = HierarchicalClustering,
+  linkage = linkage,
   tau = tau
 )
+plot(stab_unw, theta_star = subtypes)
 saveRDS(stab_unw, paste0("Results/Application/Consensus_unweighted_hclust_", distance, "_", tau, ".rds"))
 
 # Consensus hierarchical clustering (weighted)
@@ -82,6 +85,7 @@ system.time({
     nc = 1:max_nc,
     distance = distance,
     implementation = HierarchicalClustering,
+    linkage = linkage,
     tau = tau,
     Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = 10),
     noit = noit,
@@ -99,7 +103,7 @@ cluster_colours <- lighten(c("tomato", "dodgerblue", "seagreen4", "tan"), amount
 
 # Dendrogram
 {
-  pdf("Figures/Dendrogram_hierarchical_lung_subtypes.pdf",
+  pdf(paste0("Figures/Dendrogram_hierarchical_lung_subtypes_", linkage, ".pdf"),
     width = 14, height = 7
   )
   par(mar = c(7, 5, 1, 1))
@@ -143,7 +147,7 @@ for (type in c("unweighted", "weighted")) {
 
   # Calibration curves
   {
-    pdf(paste0("Figures/Calibration_", type, "_lung_subtypes.pdf"),
+    pdf(paste0("Figures/Calibration_", type, "_lung_subtypes_", linkage, ".pdf"),
       width = 12, height = 12
     )
     par(mar = rep(9, 4))
@@ -153,7 +157,7 @@ for (type in c("unweighted", "weighted")) {
 
   # Consensus matrix
   {
-    pdf(paste0("Figures/Consensus_", type, "_lung_subtypes.pdf"),
+    pdf(paste0("Figures/Consensus_", type, "_lung_subtypes_", linkage, ".pdf"),
       width = 12, height = 12
     )
     par(mar = rep(9, 4))
@@ -244,7 +248,7 @@ for (type in c("unweighted", "weighted")) {
 #             main=names(ranked_list)[k])
 #   }
 #   dev.off()}
-# 
+#
 # {pdf("Figures/Boxplots_bottom_genes_lung.pdf",
 #      width=20, height=5)
 #   par(mfrow=c(1, 10), mar=c(5,3,5,1))

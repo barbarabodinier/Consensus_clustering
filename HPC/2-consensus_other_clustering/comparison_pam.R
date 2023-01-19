@@ -1,13 +1,20 @@
+setwd("../../")
+
 library(fake)
 library(sharp)
-library(aricode)
+library(doSNOW)
+library(foreach)
+library(ggplot2)
 library(M3C)
 library(abind)
 library(cluster)
 
-setwd("../../")
-
 source("Scripts/additional_functions_specific_to_comparisons.R")
+
+# Checking package version
+print(packageVersion("M3C"))
+print(packageVersion("fake"))
+print(packageVersion("sharp"))
 
 # Simulation study parameters
 args <- commandArgs(trailingOnly = TRUE)
@@ -23,6 +30,7 @@ params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_param
 
 # Model parameters
 K <- 100
+linkage <- "complete"
 iters <- 25 # default 25, recommended 5-100 (for M3C)
 nc_max <- 20 # maximum number of clusters
 
@@ -62,16 +70,20 @@ if (equal_size) {
   n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 }
 pk <- round(rep(0.2, 5) * p)
-simul <- SimulateClustering(
-  n = n,
+sigma <- SimulateCorrelation(
   pk = pk,
-  ev_xc = ev_xc,
   nu_within = 1,
   nu_between = 0,
   v_within = c(v_min, v_max),
   v_between = 0,
   v_sign = -1,
-  pd_strategy = "min_eigenvalue",
+  pd_strategy = "min_eigenvalue"
+)$sigma
+simul <- SimulateClustering(
+  n = n,
+  pk = pk,
+  sigma = sigma,
+  ev_xc = ev_xc,
   nu_xc = nu_xc,
   output_matrices = TRUE
 )
@@ -173,9 +185,22 @@ nperf <- rbind(
   )
 )
 
+# PINS discrepancy
+discrepancy <- PINSDiscrepancy(x = simul$data, stab, method = "pam", linkage = linkage)
+id <- ManualArgmaxId(discrepancy)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
 # M3C score (PAC)
 tmptime2 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC", iters = iters, method = "pam")
+  scores <- MonteCarloScore(x = simul$data, stab, method = "pam", objective = "PAC", iters = iters)
 })
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_pac)
@@ -191,7 +216,7 @@ nperf <- rbind(
 
 # M3C score (entropy)
 tmptime3 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy", iters = iters, method = "pam")
+  scores <- MonteCarloScore(x = simul$data, stab, method = "pam", objective = "entropy", iters = iters)
 })
 rcsi_entropy <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_entropy)
@@ -219,7 +244,7 @@ nperf <- rbind(
 # Re-formatting output object
 rownames(nperf) <- c(
   "hclust_star", "hclust_silhouette", "hclust_gap",
-  "consensus_star", "delta", "pac", "rcsi_pac", "rcsi_entropy", "consensus_score"
+  "consensus_star", "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
 )
 
 # Saving output object

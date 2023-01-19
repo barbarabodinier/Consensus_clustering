@@ -59,19 +59,6 @@ simul <- SimulateClustering(
   theta_xc = theta_xc,
   output_matrices = TRUE
 )
-# simul <- SimulateClustering(
-#   n = n,
-#   pk = pk,
-#   ev_xc = ev_xc,
-#   nu_within = 1,
-#   nu_between = 0,
-#   v_within = c(v_min, v_max),
-#   v_between = 0,
-#   v_sign = -1,
-#   pd_strategy = "min_eigenvalue",
-#   theta_xc = theta_xc,
-#   output_matrices = TRUE
-# )
 simul$data <- scale(simul$data)
 
 # Heatmap of pairwise distances

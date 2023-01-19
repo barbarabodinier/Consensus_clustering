@@ -6,13 +6,6 @@ library(sharp)
 library(igraph)
 library(randomcoloR)
 library(colorspace)
-library(aricode)
-library(FactoMineR)
-library(diceR)
-library(ConsensusClusterPlus)
-library(M3C)
-library(abind)
-library(cluster)
 
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
@@ -65,19 +58,6 @@ for (simul_study_id in 1:3) {
         nu_xc = nu_xc,
         output_matrices = TRUE
       )
-      # simul <- SimulateClustering(
-      #   n = n,
-      #   pk = pk,
-      #   ev_xc = ev_xc,
-      #   nu_within = 1,
-      #   nu_between = 0,
-      #   v_within = c(v_min, v_max),
-      #   v_between = 0,
-      #   v_sign = -1,
-      #   pd_strategy = "min_eigenvalue",
-      #   nu_xc = nu_xc,
-      #   output_matrices = TRUE
-      # )
       simul$data <- scale(simul$data)
 
       # Heatmap
@@ -115,19 +95,22 @@ for (simul_study_id in 1:3) {
         mycolours <- darken(randomcoloR::distinctColorPalette(k = nc), amount = 0.2)
       }
       pk <- round(rep(0.2, 5) * p)
+      sigma=SimulateCorrelation(pk=pk,
+                                nu_within = 1,
+                                nu_between = 0,
+                                v_within = c(v_min, v_max),
+                                v_between = 0,
+                                v_sign = -1,
+                                pd_strategy = "min_eigenvalue")$sigma
       simul <- SimulateClustering(
         n = n,
         pk = pk,
+        sigma=sigma,
         ev_xc = ev_xc,
-        nu_within = 1,
-        nu_between = 0,
-        v_within = c(v_min, v_max),
-        v_between = 0,
-        v_sign = -1,
-        pd_strategy = "min_eigenvalue",
         nu_xc = nu_xc,
         output_matrices = TRUE
       )
+      simul$data <- scale(simul$data)
 
       # Silhouette plot
       mysilhouette <- silhouette(x = simul$theta, dist = dist(simul$data))

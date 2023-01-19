@@ -1,6 +1,6 @@
 Package: M3C
 Title: Monte Carlo Reference-based Consensus Clustering
-Version: 1.20.0
+Version: 1.20.0.9001
 Author: Christopher John, David Watson
 Maintainer: Christopher John <chris.r.john86@gmail.com>
 Description: M3C is a consensus clustering algorithm that uses a Monte Carlo simulation to eliminate overestimation of K and can reject the null hypothesis K=1.
@@ -9,10 +9,10 @@ License: AGPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: ggplot2, Matrix, doSNOW, cluster, parallel, foreach,
-        doParallel, matrixcalc, Rtsne, corpcor, umap
+        doParallel, matrixcalc, Rtsne, corpcor
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 7.0.1
+RoxygenNote: 7.2.0
 biocViews: Clustering, GeneExpression, Transcription, RNASeq,
         Sequencing, ImmunoOncology
 git_url: https://git.bioconductor.org/packages/M3C

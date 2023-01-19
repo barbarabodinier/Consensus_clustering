@@ -1,3 +1,0 @@
-# require(testthat)
-
-# Put tests here later...

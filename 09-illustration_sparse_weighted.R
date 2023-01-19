@@ -2,17 +2,11 @@ rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
+library(rCOSA)
 library(sharp)
 library(igraph)
 library(randomcoloR)
 library(colorspace)
-library(aricode)
-library(FactoMineR)
-library(diceR)
-library(ConsensusClusterPlus)
-library(M3C)
-library(abind)
-library(rCOSA)
 library(plotrix)
 library(openxlsx)
 
@@ -38,9 +32,9 @@ v_max <- params_list[params_id, "v_max"]
 # Manually set for sparse/weighted
 p <- 100
 nu_xc <- 0.2
-ev_xc <- 0.8
+ev_xc <- 0.7
 
-set.seed(0)
+set.seed(3)
 n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
 sigma=SimulateCorrelation(pk=pk,
@@ -58,19 +52,6 @@ simul <- SimulateClustering(
   nu_xc = nu_xc,
   output_matrices = TRUE
 )
-# simul <- SimulateClustering(
-#   n = n,
-#   pk = pk,
-#   ev_xc = ev_xc,
-#   nu_within = 1,
-#   nu_between = 0,
-#   v_within = c(v_min, v_max),
-#   v_between = 0,
-#   v_sign = -1,
-#   pd_strategy = "min_eigenvalue",
-#   nu_xc = nu_xc,
-#   output_matrices = TRUE
-# )
 simul$data <- scale(simul$data)
 
 # Heatmap of pairwise distances
@@ -86,6 +67,7 @@ tmptime <- system.time({
   )
 })
 print(tmptime)
+print(Argmax(stab_unweighted))
 
 # Consensus clustering (sparcl)
 tmptime <- system.time({
@@ -98,6 +80,7 @@ tmptime <- system.time({
   )
 })
 print(tmptime)
+print(Argmax(stab_sparcl))
 
 # Consensus clustering (cosa)
 tmptime <- system.time({
@@ -113,6 +96,7 @@ tmptime <- system.time({
   )
 })
 print(tmptime)
+print(Argmax(stab_cosa))
 
 # Making figure
 {
@@ -136,8 +120,8 @@ print(tmptime)
     axis(
       side = 1, at = i, las = 2,
       labels = colnames(stab_cosa$Beta)[i],
-      col.axis = mycolours[i],
-      font = ifelse(mycolours[i] == "red", yes = 2, no = 1)
+      col.axis = mycolours[i]
+      # font = ifelse(mycolours[i] == "red", yes = 2, no = 1)
     )
   }
   for (i in 1:ncol(stab_sparcl$Beta)) {
@@ -146,8 +130,8 @@ print(tmptime)
       labels = formatC(stab_sparcl$selprop[ArgmaxId(stab_sparcl)[1], i],
         format = "f", digits = 2
       ),
-      col.axis = ifelse(simul$theta_xc[i] == 1, yes = "red", no = "black"),
-      font = ifelse(simul$theta_xc[i] == 1, yes = 2, no = 1)
+      col.axis = ifelse(simul$theta_xc[1,i] == 1, yes = "red", no = "grey")
+      # font = ifelse(simul$theta_xc[1,i] == 1, yes = 2, no = 1)
     )
   }
   CalibrationPlot(stab_cosa,
@@ -160,8 +144,8 @@ print(tmptime)
     axis(
       side = 1, at = i, las = 2,
       labels = colnames(stab_cosa$Beta)[i],
-      col.axis = ifelse(simul$theta_xc[i] == 1, yes = "red", no = "black"),
-      font = ifelse(simul$theta_xc[i] == 1, yes = 2, no = 1)
+      col.axis = ifelse(simul$theta_xc[1,i] == 1, yes = "red", no = "grey")
+      # font = ifelse(simul$theta_xc[1,i] == 1, yes = 2, no = 1)
     )
   }
   dev.off()

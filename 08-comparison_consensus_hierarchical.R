@@ -1,19 +1,21 @@
 rm(list = ls())
 setwd("~/Dropbox/Consensus_clustering")
 
+library(colorspace)
 library(openxlsx)
 
 # Simulation parameters
-method <- "pam"
-for (simul_study_id in c("1")) {
+method <- "hierarchical"
+# method <- "pam"
+for (simul_study_id in c("1_100M3C")) {
   print(paste0("Simulation study ", simul_study_id))
 
   # Template design
   mycolours <- lighten(c(
     "tan",
     "darkgreen", lighten("darkgreen", amount = 0.3),
-    "orange",
-    "maroon4", lighten("maroon4", amount = 0.3),
+    "orange", 
+    darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
     "navy", lighten("navy", amount = 0.3),
     "darkred"
   ),
@@ -30,13 +32,14 @@ for (simul_study_id in c("1")) {
     "Silhouette",
     "GAP statistic",
     "G*",
-    "Delta", "PAC",
+    "Delta", "PAC", "PINS discrepancy",
     "RCSI (PAC)", "RCSI (entropy)",
     "Consensus score"
   )
   names(full_names) <- c(
     "hclust_star", "hclust_silhouette", "hclust_gap",
-    "consensus_star", "delta", "pac", "rcsi_pac", "rcsi_entropy", "consensus_score"
+    "consensus_star", "delta", "pac", "pins_discrepancy",
+    "rcsi_pac", "rcsi_entropy", "consensus_score"
   )
   if (method == "hierarchical") {
     algo_names <- c("Hierarchical", "Consensus hierarchical")
@@ -114,17 +117,15 @@ for (simul_study_id in c("1")) {
       whisklty = 1, range = 0, las = 1, main = dimensionality[simul_id], cex.main = 1.5,
       ylab = myylab, cex.lab = 1.5, xaxt = "n", ylim = ylim, frame = "F", boxwex = 0.35
     )
-    # mtext(text = LETTERS[simul_id], side = 2, at = 1.1, line = 3, cex = 2, las = 1)
-    # title(simul_id)
     abline(h = axTicks(2), lty = 3, col = "grey")
-    zseq <- c(0.5, 3.5, 9.5)
+    zseq <- c(0.5, 3.5, 10.5)
     abline(v = zseq, lty = 2, col = "black")
     boxplot(
       at = xseq, mylist, col = mycolours, boxcol = mycolours, whiskcol = mycolours, staplecol = mycolours, medcol = darken(mycolours, amount = 0.4),
       whisklty = 1, range = 0, las = 1, add = TRUE,
       ylab = myylab, cex.lab = 1.5, xaxt = "n", frame = "F", boxwex = 0.35
     )
-    for (id in c(1, 4, 9)) {
+    for (id in c(1, 4, 10)) {
       abline(h = eval(parse(text = paste0("median", id))), col = darken(mycolours[id], amount = 0.4), lty = 2)
     }
     # abline(h = median6, col = darken(mycolours[6], amount=0.4), lty = 2)

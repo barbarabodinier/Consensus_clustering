@@ -1,4 +1,4 @@
-SilhouetteScore <- function(x, nc_max = 20, method = "hclust", linkage="complete") {
+SilhouetteScore <- function(x, nc_max = 20, method = "hclust", linkage = "complete") {
   dist <- dist(x, method = "euclidian")
   score <- rep(NA, nc_max)
 
@@ -34,8 +34,8 @@ SilhouetteScore <- function(x, nc_max = 20, method = "hclust", linkage="complete
 }
 
 
-hclusCut <- function(x, k, d.meth = "euclidean", ...) {
-  return(list(cluster = cutree(hclust(dist(x, method = d.meth), ...), k = k)))
+hclusCut <- function(x, k, d.meth = "euclidean", linkage = "complete", ...) {
+  return(list(cluster = cutree(hclust(dist(x, method = d.meth), method = linkage, ...), k = k)))
 }
 
 
@@ -51,11 +51,12 @@ pamCut <- function(x, k, d.meth = "euclidean", ...) {
 }
 
 
-GapStatistic <- function(xdata, nc_max = 20, iters = 25, method = "hclust") {
+GapStatistic <- function(xdata, nc_max = 20, iters = 25, method = "hclust", linkage = "complete") {
   if (method == "hclust") {
     out <- clusGap(
       x = as.matrix(xdata),
       FUNcluster = hclusCut,
+      linkage = linkage,
       K.max = nc_max, B = iters,
       verbose = FALSE
     )
@@ -134,7 +135,42 @@ PAC <- function(stab, x1 = 0.1, x2 = 0.9) {
 }
 
 
-MonteCarloScore <- function(x, stab, iters = 25, objective = "entropy", method = "hclust") {
+PINSDiscrepancy <- function(x, stab, method = "hclust", linkage = "complete") {
+  # Clustering on original (full) data
+  if (method == "hclust") {
+    myclustering <- HierarchicalClustering(xdata = x, nc = stab$nc, linkage = linkage)
+  }
+  if (method == "kmeans") {
+    myclustering <- KMeansClustering(xdata = x, nc = stab$nc)
+  }
+  if (method == "pam") {
+    myclustering <- PAMClustering(xdata = x, nc = stab$nc)
+  }
+  origS <- list()
+  for (k in stab$nc) {
+    origS <- c(origS, list(myclustering$comembership[, , k]))
+  }
+  origS[[1]] <- list(NULL)
+
+  # Clustering on perturbed data (subsamples)
+  pertS <- list()
+  for (k in 1:dim(stab$coprop)[3]) {
+    pertS <- c(pertS, list(stab$coprop[, , k]))
+  }
+  pertS[[1]] <- list(NULL)
+
+  # Calculating PINS discrepancy
+  discrepancy <- PINSPlus:::CalcPerturbedDiscrepancy(
+    origS = origS,
+    pertS = pertS,
+    clusRange = 2:max(stab$nc)
+  )$AUC
+
+  return(discrepancy)
+}
+
+
+MonteCarloScore <- function(x, stab, iters = 25, objective = "entropy", method = "hclust", linkage = "complete") {
   if (method == "hclust") {
     clusteralg <- "hc"
   }
@@ -144,13 +180,17 @@ MonteCarloScore <- function(x, stab, iters = 25, objective = "entropy", method =
   if (method == "pam") {
     clusteralg <- "pam"
   }
+
   # Running M3C for reference distribution
   out <- M3C(
     mydata = t(x),
     iters = iters,
     clusteralg = clusteralg,
+    innerLinkage = linkage,
+    finalLinkage = "complete",
     maxK = max(stab$nc),
     pItem = stab$params$tau,
+    repsref = stab$params$K,
     repsreal = 2,
     seed = 1,
     objective = objective,
@@ -298,44 +338,44 @@ ManualArgmaxId <- function(x, digits = 10) {
 }
 
 
-CalibrationCurve <- function(stability,
-                             bty = "o", xlab = "", ylab = "",
-                             col = c("navy", "forestgreen", "tomato"),
-                             legend = TRUE, ncol = 1) {
-  y <- stability$Sc
-  x <- stability$nc
-  z <- round(stability$Lambda, digits = 5)
-
-  mycolours <- colorRampPalette(col)(length(unique(z)))
-  names(mycolours) <- unique(z)
-  plot(NA,
-    xlim = c(0, max(stability$nc)), ylim = c(0, 1),
-    xlab = xlab, ylab = ylab,
-    las = 1, cex.lab = 1.5, bty = bty
-  )
-  for (lambda in unique(z)) {
-    ids <- which(z == lambda)
-    points(x[ids], y[ids], pch = 18, col = mycolours[as.character(lambda)])
-    lines(x[ids], y[ids], lty = 1, lwd = 0.5, col = mycolours[as.character(lambda)])
-  }
-  abline(v = Argmax(stability)[1], lty = 2, col = "darkred")
-  if (legend) {
-    if (length(unique(stability$Q)) == 1) {
-      legend("topright",
-        legend = unique(formatC(stability$Lambda, format = "f", digits = 2)),
-        pch = 15, col = mycolours, bty = "n", title = expression(lambda), ncol = ncol
-      )
-    } else {
-      legend("topright",
-        legend = paste0(
-          unique(formatC(stability$Lambda[, 1], format = "f", digits = 2)),
-          " (", unique(stability$Q[, 1]), ")"
-        ),
-        pch = 15, col = mycolours, bty = "n", title = expression(lambda), ncol = ncol
-      )
-    }
-  }
-}
+# CalibrationCurve <- function(stability,
+#                              bty = "o", xlab = "", ylab = "",
+#                              col = c("navy", "forestgreen", "tomato"),
+#                              legend = TRUE, ncol = 1) {
+#   y <- stability$Sc
+#   x <- stability$nc
+#   z <- round(stability$Lambda, digits = 5)
+#
+#   mycolours <- colorRampPalette(col)(length(unique(z)))
+#   names(mycolours) <- unique(z)
+#   plot(NA,
+#     xlim = c(0, max(stability$nc)), ylim = c(0, 1),
+#     xlab = xlab, ylab = ylab,
+#     las = 1, cex.lab = 1.5, bty = bty
+#   )
+#   for (lambda in unique(z)) {
+#     ids <- which(z == lambda)
+#     points(x[ids], y[ids], pch = 18, col = mycolours[as.character(lambda)])
+#     lines(x[ids], y[ids], lty = 1, lwd = 0.5, col = mycolours[as.character(lambda)])
+#   }
+#   abline(v = Argmax(stability)[1], lty = 2, col = "darkred")
+#   if (legend) {
+#     if (length(unique(stability$Q)) == 1) {
+#       legend("topright",
+#         legend = unique(formatC(stability$Lambda, format = "f", digits = 2)),
+#         pch = 15, col = mycolours, bty = "n", title = expression(lambda), ncol = ncol
+#       )
+#     } else {
+#       legend("topright",
+#         legend = paste0(
+#           unique(formatC(stability$Lambda[, 1], format = "f", digits = 2)),
+#           " (", unique(stability$Q[, 1]), ")"
+#         ),
+#         pch = 15, col = mycolours, bty = "n", title = expression(lambda), ncol = ncol
+#       )
+#     }
+#   }
+# }
 
 
 SparseHierarchicalClustering <- function(xdata, nc = NULL, Lambda, linkage = "complete", scale = TRUE, rows = TRUE, ...) {

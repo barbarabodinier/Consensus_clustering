@@ -8,24 +8,6 @@ library(randomcoloR)
 library(colorspace)
 library(aricode)
 
-# # Simulation with perfect consensus clustering
-# set.seed(0)
-# n=c(20,50,30)
-# simul=SimulateClustering(n=n,
-#                          pk=20,
-#                          nu_xc=1,
-#                          ev_xc=0.4)
-
-# # Simulation of data with clusters
-# set.seed(0)
-# n <- c(20, 50, 30)
-# simul <- SimulateClustering(
-#   n = n,
-#   pk = 20,
-#   nu_xc = 1,
-#   ev_xc = 0.3
-# )
-
 # Simulation of data with clusters
 set.seed(1)
 n <- c(20, 50, 30)
