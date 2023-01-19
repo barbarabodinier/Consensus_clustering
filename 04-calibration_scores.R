@@ -19,25 +19,27 @@ library(abind)
 source("Scripts/additional_functions_specific_to_comparisons.R")
 
 # Simulation of data with clusters
-n_tot=150
-p=10
+n_tot <- 150
+p <- 10
 n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
-ev_xc=0.5
-v_min=v_max=0
-nu_xc=1
+ev_xc <- 0.5
+v_min <- v_max <- 0
+nu_xc <- 1
 set.seed(1)
-sigma=SimulateCorrelation(pk=pk,
-                          nu_within = 1,
-                          nu_between = 0,
-                          v_within = c(v_min, v_max),
-                          v_between = 0,
-                          v_sign = -1,
-                          pd_strategy = "min_eigenvalue")$sigma
+sigma <- SimulateCorrelation(
+  pk = pk,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue"
+)$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
-  sigma=sigma,
+  sigma = sigma,
   ev_xc = ev_xc,
   nu_xc = nu_xc,
   output_matrices = TRUE
@@ -90,7 +92,7 @@ perf <- AllPerf(stab)
 # Figures
 {
   pdf("Figures/Score_vs_performance_simul.pdf",
-      width = 6, height = 6
+    width = 6, height = 6
   )
   par(mar = rep(5, 4))
   Heatmap(as.matrix(dist(x)))

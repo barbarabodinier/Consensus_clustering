@@ -80,10 +80,10 @@ for (simul_study_id in "4") {
   write.xlsx(as.data.frame(mytable), paste0("Tables/Simulations_consensus_", method, "/Table_performances_", simul_study_id, ".xlsx"),
     rowNames = FALSE, colNames = TRUE, overwrite = TRUE
   )
-  mytable[,2]=gsub("'", "", mytable[,2])
-  ids=grep("lambda", mytable[,2])
-  mytable[ids,2]=paste0("$", gsub("]*", "", gsub("lambda[", "\\lambda_", mytable[ids,2], fixed=TRUE), fixed=TRUE), "$")
-  mytable[,4]=gsub("NA [NA]", "", mytable[,4], fixed=TRUE)
+  mytable[, 2] <- gsub("'", "", mytable[, 2])
+  ids <- grep("lambda", mytable[, 2])
+  mytable[ids, 2] <- paste0("$", gsub("]*", "", gsub("lambda[", "\\lambda_", mytable[ids, 2], fixed = TRUE), fixed = TRUE), "$")
+  mytable[, 4] <- gsub("NA [NA]", "", mytable[, 4], fixed = TRUE)
   write.table(mytable, paste0("Tables/Simulations_consensus_", method, "/Table_performances_", simul_study_id, ".txt"),
     row.names = FALSE, col.names = TRUE, quote = FALSE, eol = "££\n", sep = "&"
   )
@@ -133,7 +133,7 @@ for (simul_study_id in "4") {
     for (i in 1:nrow(performances)) {
       axis(
         side = 1, at = xseq[i],
-        labels = eval(parse(text = paste0("expression(", (tmpfullnames[rownames(performances)])[i], ")"))), 
+        labels = eval(parse(text = paste0("expression(", (tmpfullnames[rownames(performances)])[i], ")"))),
         las = 2, tick = FALSE
       )
     }
@@ -145,7 +145,7 @@ for (simul_study_id in "4") {
     for (i in 1:length(algo_names)) {
       axis(
         side = 3, at = apply(rbind(zseq[-1], zseq[-length(zseq)]), 2, mean)[i],
-        labels = algo_names[i], 
+        labels = algo_names[i],
         cex.axis = 1, tick = FALSE
       )
     }
@@ -153,7 +153,7 @@ for (simul_study_id in "4") {
     axis(side = 3, at = zseq2[2:3], labels = NA, line = 2.5)
     axis(
       side = 3, at = apply(rbind(zseq2[-1], zseq2[-length(zseq2)]), 2, mean)[2],
-      labels = "Consensus clustering", 
+      labels = "Consensus clustering",
       cex.axis = 1, tick = FALSE, line = 2.5
     )
     dev.off() }}

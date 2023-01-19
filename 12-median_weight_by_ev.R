@@ -44,17 +44,19 @@ pk <- round(rep(0.2, 5) * p)
 q <- round(nu_xc * p)
 theta_xc <- c(rep(1, q), rep(0, p - q))
 ev_xc <- c(seq(0.2, 0.99, length.out = q), rep(0, p - q))
-sigma=SimulateCorrelation(pk=pk,
-                          nu_within = 1,
-                          nu_between = 0,
-                          v_within = c(v_min, v_max),
-                          v_between = 0,
-                          v_sign = -1,
-                          pd_strategy = "min_eigenvalue")$sigma
+sigma <- SimulateCorrelation(
+  pk = pk,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue"
+)$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
-  sigma=sigma,
+  sigma = sigma,
   ev_xc = ev_xc,
   theta_xc = theta_xc,
   output_matrices = TRUE

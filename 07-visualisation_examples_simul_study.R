@@ -43,17 +43,19 @@ for (simul_study_id in 1:3) {
         n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
       }
       pk <- round(rep(0.2, 5) * p)
-      sigma=SimulateCorrelation(pk=pk,
-                                nu_within = 1,
-                                nu_between = 0,
-                                v_within = c(v_min, v_max),
-                                v_between = 0,
-                                v_sign = -1,
-                                pd_strategy = "min_eigenvalue")$sigma
+      sigma <- SimulateCorrelation(
+        pk = pk,
+        nu_within = 1,
+        nu_between = 0,
+        v_within = c(v_min, v_max),
+        v_between = 0,
+        v_sign = -1,
+        pd_strategy = "min_eigenvalue"
+      )$sigma
       simul <- SimulateClustering(
         n = n,
         pk = pk,
-        sigma=sigma,
+        sigma = sigma,
         ev_xc = ev_xc,
         nu_xc = nu_xc,
         output_matrices = TRUE
@@ -95,17 +97,19 @@ for (simul_study_id in 1:3) {
         mycolours <- darken(randomcoloR::distinctColorPalette(k = nc), amount = 0.2)
       }
       pk <- round(rep(0.2, 5) * p)
-      sigma=SimulateCorrelation(pk=pk,
-                                nu_within = 1,
-                                nu_between = 0,
-                                v_within = c(v_min, v_max),
-                                v_between = 0,
-                                v_sign = -1,
-                                pd_strategy = "min_eigenvalue")$sigma
+      sigma <- SimulateCorrelation(
+        pk = pk,
+        nu_within = 1,
+        nu_between = 0,
+        v_within = c(v_min, v_max),
+        v_between = 0,
+        v_sign = -1,
+        pd_strategy = "min_eigenvalue"
+      )$sigma
       simul <- SimulateClustering(
         n = n,
         pk = pk,
-        sigma=sigma,
+        sigma = sigma,
         ev_xc = ev_xc,
         nu_xc = nu_xc,
         output_matrices = TRUE

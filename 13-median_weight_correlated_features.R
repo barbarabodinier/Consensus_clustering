@@ -41,17 +41,19 @@ n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
 q <- round(nu_xc * p)
 theta_xc <- sample(c(rep(1, q), rep(0, p - q)))
-sigma=SimulateCorrelation(pk=pk,
-                          nu_within = 1,
-                          nu_between = 0,
-                          v_within = c(v_min, v_max),
-                          v_between = 0,
-                          v_sign = -1,
-                          pd_strategy = "min_eigenvalue")$sigma
+sigma <- SimulateCorrelation(
+  pk = pk,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue"
+)$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
-  sigma=sigma,
+  sigma = sigma,
   ev_xc = ev_xc,
   theta_xc = theta_xc,
   output_matrices = TRUE
@@ -93,14 +95,13 @@ stab <- Clustering(
   WeightBoxplot(stab,
     col = ifelse(theta_xc == 1, yes = "red", no = "grey"),
     frame = TRUE, boxwex = 0.2,
-    ylab = "Median weight", xaxt = "n"
+    ylab = "Median weight",
   )
   for (i in 1:ncol(stab$Beta)) {
     axis(
       side = 1, at = i, las = 2,
       labels = colnames(stab$Beta)[i],
-      col.axis = ifelse(theta_xc[i] == 1, yes = "red", no = "black"),
-      font = ifelse(theta_xc[i] == 1, yes = 2, no = 1)
+      col.axis = ifelse(theta_xc[i] == 1, yes = "red", no = "grey")
     )
   }
   mycolours <- c("grey", "grey30", "grey30", "grey")

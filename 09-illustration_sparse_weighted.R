@@ -37,17 +37,19 @@ ev_xc <- 0.7
 set.seed(3)
 n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
-sigma=SimulateCorrelation(pk=pk,
-                          nu_within = 1,
-                          nu_between = 0,
-                          v_within = c(v_min, v_max),
-                          v_between = 0,
-                          v_sign = -1,
-                          pd_strategy = "min_eigenvalue")$sigma
+sigma <- SimulateCorrelation(
+  pk = pk,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue"
+)$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
-  sigma=sigma,
+  sigma = sigma,
   ev_xc = ev_xc,
   nu_xc = nu_xc,
   output_matrices = TRUE
@@ -121,7 +123,6 @@ print(Argmax(stab_cosa))
       side = 1, at = i, las = 2,
       labels = colnames(stab_cosa$Beta)[i],
       col.axis = mycolours[i]
-      # font = ifelse(mycolours[i] == "red", yes = 2, no = 1)
     )
   }
   for (i in 1:ncol(stab_sparcl$Beta)) {
@@ -130,8 +131,7 @@ print(Argmax(stab_cosa))
       labels = formatC(stab_sparcl$selprop[ArgmaxId(stab_sparcl)[1], i],
         format = "f", digits = 2
       ),
-      col.axis = ifelse(simul$theta_xc[1,i] == 1, yes = "red", no = "grey")
-      # font = ifelse(simul$theta_xc[1,i] == 1, yes = 2, no = 1)
+      col.axis = ifelse(simul$theta_xc[1, i] == 1, yes = "red", no = "grey")
     )
   }
   CalibrationPlot(stab_cosa,
@@ -144,8 +144,7 @@ print(Argmax(stab_cosa))
     axis(
       side = 1, at = i, las = 2,
       labels = colnames(stab_cosa$Beta)[i],
-      col.axis = ifelse(simul$theta_xc[1,i] == 1, yes = "red", no = "grey")
-      # font = ifelse(simul$theta_xc[1,i] == 1, yes = 2, no = 1)
+      col.axis = ifelse(simul$theta_xc[1, i] == 1, yes = "red", no = "grey")
     )
   }
   dev.off()

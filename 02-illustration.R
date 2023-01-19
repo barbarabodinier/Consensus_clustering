@@ -98,7 +98,7 @@ max_N <- 10
       abline(v = stab$nc[1:max_N], lty = 3, col = "grey")
     ),
     xlab = "", ylab = "Consensus Score", xaxt = "n",
-    cex.lab = 1.5, las = 3, ylim=c(0.2,1)
+    cex.lab = 1.5, las = 3, ylim = c(0.2, 1)
   )
   axis(side = 3, at = stab$nc[1:max_N], las = 2)
   mtext(text = "Number of clusters", side = 3, line = 3, cex = 1.5)

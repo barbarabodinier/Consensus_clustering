@@ -14,7 +14,7 @@ for (simul_study_id in c("1_100M3C")) {
   mycolours <- lighten(c(
     "tan",
     "darkgreen", lighten("darkgreen", amount = 0.3),
-    "orange", 
+    "orange",
     darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
     "navy", lighten("navy", amount = 0.3),
     "darkred"
