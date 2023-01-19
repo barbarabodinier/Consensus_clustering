@@ -1,0 +1,4 @@
+"simulation_id"	"nc"	"equal_size"	"n_tot"	"p"	"ev_xc"	"nu_xc"	"v_min"	"v_max"
+1	5	TRUE	150	30	0.4	1	0	0
+2	10	TRUE	150	30	0.4	1	0	0
+3	15	TRUE	150	30	0.4	1	0	0
