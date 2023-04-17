@@ -1,5 +1,4 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(colorspace)
 library(openxlsx)
@@ -7,7 +6,7 @@ library(openxlsx)
 # Simulation parameters
 method <- "hierarchical"
 # method <- "pam"
-for (simul_study_id in c("1_100M3C")) {
+for (simul_study_id in c("2")) {
   print(paste0("Simulation study ", simul_study_id))
 
   # Template design
@@ -128,9 +127,6 @@ for (simul_study_id in c("1_100M3C")) {
     for (id in c(1, 4, 10)) {
       abline(h = eval(parse(text = paste0("median", id))), col = darken(mycolours[id], amount = 0.4), lty = 2)
     }
-    # abline(h = median6, col = darken(mycolours[6], amount=0.4), lty = 2)
-    # abline(h = median5, col = darken(mycolours[5], amount=0.4), lty = 2)
-    # abline(h = median4, col = darken(mycolours[4], amount=0.4), lty = 2)
     axis(side = 1, at = xseq, labels = full_names[rownames(performances)], las = 2)
     axis(side = 3, at = zseq, labels = NA)
     axis(side = 3, at = apply(rbind(zseq[-1], zseq[-length(zseq)]), 2, mean), labels = algo_names, tick = FALSE)

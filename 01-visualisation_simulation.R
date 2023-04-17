@@ -1,14 +1,9 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
 library(sharp)
-library(igraph)
-library(randomcoloR)
 library(colorspace)
-library(aricode)
 library(FactoMineR)
-library(corpcor)
 library(cluster)
 
 # Simulation of data with clusters
@@ -44,58 +39,6 @@ mycolours <- darken(c("navy", "red", "gold"), amount = 0.2)
     text(simul$data[, xcomp], simul$data[, ycomp],
       pch = 19, cex = 0.7, las = 1,
       labels = gsub("obs", "", rownames(simul$data)),
-      col = mycolours[simul$theta]
-    )
-  }
-  dev.off()
-}
-
-
-# Simulation of data with clusters
-set.seed(1)
-n <- c(20, 50, 30)
-simul <- SimulateClustering(
-  n = n,
-  pk = 10,
-  nu_xc = 1,
-  ev_xc = 0.5
-)
-
-# Making figure
-{
-  pdf("Figures/Visualisation_simulation.pdf",
-    height = 10, width = 11
-  )
-  # Heatmap of pairwise distances
-  layout(
-    mat = matrix(c(1, 1, 1, 2, 3, 4),
-      nrow = 2, byrow = TRUE
-    ),
-    heights = c(2, 1)
-  )
-  par(mar = c(5, 19, 1, 19))
-  x <- simul$data
-  Heatmap(as.matrix(dist(x)))
-
-  # Principal Component Analysis
-  par(mar = c(5, 4.5, 2, 4.5))
-  mypca <- PCA(simul$data, graph = FALSE)
-  tmp <- matrix(c(1, 2, 1, 3, 2, 3), byrow = TRUE, ncol = 2)
-  for (k in 1:nrow(tmp)) {
-    xcomp <- tmp[k, 1]
-    ycomp <- tmp[k, 2]
-    plot(NA,
-      xlim = range(mypca$ind$coord[, 1:max(tmp)]),
-      ylim = range(mypca$ind$coord[, 1:max(tmp)]),
-      las = 1, cex.lab = 1.5, cex.lab = 1.5,
-      xlab = paste0("Comp ", xcomp, " (", round(mypca$eig[xcomp, 2], digits = 2), "% e.v.)"),
-      ylab = paste0("Comp ", ycomp, " (", round(mypca$eig[ycomp, 2], digits = 2), "% e.v.)")
-    )
-    abline(v = axTicks(1), lty = 3, col = "grey")
-    abline(h = axTicks(2), lty = 3, col = "grey")
-    text(mypca$ind$coord[, xcomp], mypca$ind$coord[, ycomp],
-      pch = 19, cex = 0.7, las = 1,
-      labels = gsub("obs", "", rownames(mypca$ind$coord)),
       col = mycolours[simul$theta]
     )
   }
@@ -147,7 +90,6 @@ simul <- SimulateClustering(
   }
   dev.off()
 }
-
 
 # Simulation of data with clusters
 mycolours <- darken(c("tan", "royalblue", "gold", "tomato", "darkolivegreen"), amount = 0.2)

@@ -1,5 +1,4 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(colorspace)
 library(openxlsx)

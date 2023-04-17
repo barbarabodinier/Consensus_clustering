@@ -1,15 +1,11 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
+library(sharp)
 library(data.table)
 library(readxl)
 library(dendextend)
 library(plotrix)
 library(colorspace)
-library(annotate)
-library(hgu95a.db)
-# library(sharp)
-devtools::load_all("/Users/barbara/Dropbox/R_packages/Stability/sharp")
 
 # Parameters
 tau <- 0.5
@@ -99,7 +95,7 @@ saveRDS(stab_w, paste0("Results/Application/Consensus_weighted_hclust_", distanc
 # Figure parameters
 nc_star <- 4
 subtype_colours <- lighten(c("darkolivegreen", NA, "darkred", "navy", "salmon4"), amount = 0.5)
-cluster_colours <- lighten(c("tomato", "dodgerblue", "seagreen4", "tan"), amount = 0)
+cluster_colours <- lighten(c("tomato", "dodgerblue", "seagreen4", "tan", "darkmagenta"), amount = 0)
 
 # Dendrogram
 {
@@ -188,7 +184,8 @@ for (type in c("unweighted", "weighted")) {
     }
     box()
     ordered <- Clusters(stab)[colnames(mat)]
-    for (k in 1:nc_star) {
+    nc=Argmax(stab)[1]
+    for (k in 1:nc) {
       tmpx <- range(which(ordered == unique(ordered)[k]) - 0.5) + c(-0.25, 0.25)
       axis(
         side = 1, at = tmpx, labels = NA, line = 5,
@@ -197,12 +194,12 @@ for (type in c("unweighted", "weighted")) {
       axis(
         side = 1, at = mean(tmpx),
         labels = paste0("Cluster ", k),
-        line = 5, tick = FALSE, cex.axis = 1.25,
+        line = 5, tick = FALSE, cex.axis = 1.1,
         col.axis = darken(cluster_colours[k], amount = 0.5)
       )
     }
     ordered <- Clusters(stab)[colnames(mat)]
-    for (k in 1:nc_star) {
+    for (k in 1:nc) {
       tmpx <- range(nrow(mat) - which(ordered == unique(ordered)[k]) + 0.5) + c(-0.25, 0.25)
       axis(
         side = 2, at = tmpx, labels = NA, line = 5,
@@ -211,7 +208,7 @@ for (type in c("unweighted", "weighted")) {
       axis(
         side = 2, at = mean(tmpx),
         labels = paste0("Cluster ", k),
-        line = 5, tick = FALSE, cex.axis = 1.25,
+        line = 5, tick = FALSE, cex.axis = 1.1,
         col.axis = darken(cluster_colours[k], amount = 0.5)
       )
     }
@@ -226,101 +223,3 @@ for (type in c("unweighted", "weighted")) {
     dev.off()
   }
 }
-
-
-# # Ordered median of median weights
-# stab=stab_w
-# myclusters=Clusters(stab)
-# ranked_list=rank(-apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median))
-# WeightBoxplot(stab, at=ranked_list)
-# myclusters=Clusters(stab)
-# N=20
-# {pdf("Figures/Boxplots_top_genes_lung.pdf",
-#      width=20, height=5)
-#   par(mfrow=c(1, 10), mar=c(5,3,5,1))
-#   mycolours=lighten(c("navy", "darkolivegreen", "darkred", "darkmagenta"), amount=0.5)
-#   for (k in 1:N){
-#     tmpx=split(x[,names(sort(apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median), decreasing = TRUE))[k]],
-#                f=paste0("C", myclusters))
-#     boxplot(tmpx, range = 0, boxwex=0.35, frame=FALSE,
-#             col = mycolours, boxcol = mycolours, whiskcol = mycolours, staplecol = mycolours,
-#             medcol = darken(mycolours, amount = 0.4),
-#             main=names(ranked_list)[k])
-#   }
-#   dev.off()}
-#
-# {pdf("Figures/Boxplots_bottom_genes_lung.pdf",
-#      width=20, height=5)
-#   par(mfrow=c(1, 10), mar=c(5,3,5,1))
-#   mycolours=lighten(c("navy", "darkolivegreen", "darkred", "darkmagenta"), amount=0.5)
-#   for (k in 1:N){
-#     tmpx=split(x[,names(sort(apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median), decreasing = TRUE))[ncol(stab$Beta)-k+1]],
-#                f=paste0("C", myclusters))
-#     boxplot(tmpx, range = 0, boxwex=0.35, frame=FALSE,
-#             col = mycolours, boxcol = mycolours, whiskcol = mycolours, staplecol = mycolours,
-#             medcol = darken(mycolours, amount = 0.4),
-#             main=names(ranked_list)[k])
-#   }
-#   dev.off()}
-
-
-
-# stab=stab_w
-# WeightBoxplot(stability=stab)
-# colnames(stab$Beta)[1:5]
-#
-# annot=data.frame(id=colnames(stab$Beta),
-#                  chr=as.character(mget(colnames(stab$Beta), env=hgu95aCHR, ifnotfound=NA)),
-#                  chr=as.character(mget(colnames(stab$Beta), env=hgu95aCHRLOC, ifnotfound=NA)),
-#                  gene=as.character(mget(colnames(stab$Beta), env=hgu95aSYMBOL, ifnotfound=NA)))
-#
-# mget(colnames(stab$Beta), env=hgu95aPATH, ifnotfound=NA)
-# kegg_pathways=do.call(c, mget(colnames(stab$Beta), env=hgu95aPATH, ifnotfound=NA))
-# kegg_pathways=kegg_pathways[!is.na(kegg_pathways)]
-# kegg_pathways=unique(kegg_pathways)
-#
-# disease_class_gad=fread("Data/Lung_cancer/chart_617FC072E0CF1659630322320.txt",
-#                         sep="\t", data.table = FALSE)
-# disease_class_gad$Term
-# disease_class_gad$Genes
-# cancer_genes=strsplit(disease_class_gad$Genes[which(disease_class_gad$Term=="CANCER")], split = ", ")[[1]]
-#
-# disease_gad=fread("Data/Lung_cancer/chart_617FC072E0CF1659630829212.txt",
-#                   sep="\t", data.table = FALSE)
-# lung_cancer_genes=unique(strsplit(disease_class_gad$Genes[which(disease_gad$Term=="lung cancer")], split = ", ")[[1]])
-#
-#
-#
-#
-# rownames(annot)=annot$id
-# gene_list=annot$gene
-# gene_list=gene_list[!is.na(gene_list)]
-# gene_list=unique(gene_list)
-# write.table(cbind(gene_list), "Data/Lung_cancer/Gene_list.txt",
-#             row.names=FALSE, col.names=FALSE, quote=FALSE)
-#
-# panther=data.table::fread("Data/Lung_cancer/pantherGeneList.txt",
-#                           header = FALSE, sep="\t")
-# table(panther[,6]) # Panther-GO Molecular Function
-#
-# mycolours=randomcoloR::distinctColorPalette(k=length(unique(annot$chr)))
-# # colorRampPalette(c("navy","red"))(length(unique(annot$chr)))
-# names(mycolours)=unique(annot$chr)
-# x=apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median)
-# # x=x[sort.list(annot[names(x),"chr"])]
-# plot(x, col=mycolours[annot[names(x), "chr"]])
-#
-#
-#
-# x=apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median)
-# plot(x, col=ifelse(annot[names(x),"gene"]%in%cancer_genes, yes="red", no="grey"))
-#
-# x=apply(stab$Beta[ArgmaxId(stab)[1],,], 1, median)
-# plot(x, col=ifelse(annot[names(x),"gene"]%in%lung_cancer_genes, yes="red", no="grey"))
-#
-#
-# boxplot(list(x[which(annot[names(x),"gene"]%in%lung_cancer_genes)],
-#              x[which(!annot[names(x),"gene"]%in%lung_cancer_genes)]))
-#
-# boxplot(list(x[which(annot[names(x),"gene"]%in%cancer_genes)],
-#              x[which(!annot[names(x),"gene"]%in%cancer_genes)]))

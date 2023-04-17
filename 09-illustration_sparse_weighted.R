@@ -1,11 +1,8 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
 library(rCOSA)
 library(sharp)
-library(igraph)
-library(randomcoloR)
 library(colorspace)
 library(plotrix)
 library(openxlsx)
@@ -32,9 +29,9 @@ v_max <- params_list[params_id, "v_max"]
 # Manually set for sparse/weighted
 p <- 100
 nu_xc <- 0.2
-ev_xc <- 0.7
+ev_xc <- 0.6
 
-set.seed(3)
+set.seed(1)
 n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
 sigma <- SimulateCorrelation(

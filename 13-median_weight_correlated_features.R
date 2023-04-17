@@ -1,12 +1,10 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
+library(rCOSA)
 library(sharp)
 library(igraph)
-library(randomcoloR)
 library(colorspace)
-library(rCOSA)
 library(plotrix)
 
 source("Scripts/additional_functions_specific_to_comparisons.R")

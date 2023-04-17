@@ -1,15 +1,10 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
 library(sharp)
-library(igraph)
-library(randomcoloR)
 library(colorspace)
-library(aricode)
-library(FactoMineR)
 library(diceR)
-library(ConsensusClusterPlus)
+library(PINSPlus)
 library(doSNOW)
 library(foreach)
 library(ggplot2)
@@ -23,7 +18,7 @@ n_tot <- 150
 p <- 10
 n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
 pk <- round(rep(0.2, 5) * p)
-ev_xc <- 0.5
+ev_xc <- 0.6
 v_min <- v_max <- 0
 nu_xc <- 1
 set.seed(1)
@@ -56,35 +51,22 @@ ClusteringPerformance(theta = myclusters, theta_star = simul)
 # Stability
 stab <- Clustering(xdata = x, implementation = HierarchicalClustering, nc = 1:20)
 
-# Consensus score
-plot(stab$Sc)
-which.max(stab$Sc)
-
 # Delta score
 delta <- DeltaAreaCDF(stab)
-plot(delta)
-which.max(delta)
 
 # PAC score
 pac <- PAC(stab)
-plot(pac)
-which.min(pac)
 
 # PINS discrepancy score
 discrepancy <- PINSDiscrepancy(x = simul$data, stab)
-which.max(discrepancy)
 
 # M3C score (PAC)
 scores <- MonteCarloScore(x = simul$data, stab, objective = "PAC")
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
-plot(rcsi_pac)
-which.max(rcsi_pac)
 
 # M3C score (entropy)
 scores <- MonteCarloScore(x = simul$data, stab, objective = "entropy")
 rcsi_entropy <- scores$RCSI # criterion to define assignments in their code
-plot(rcsi_entropy)
-which.max(rcsi_entropy)
 
 # Clustering performances for different numbers of clusters
 perf <- AllPerf(stab)
@@ -104,8 +86,6 @@ perf <- AllPerf(stab)
     width = 11, height = 7
   )
   par(mfrow = c(2, 3))
-  # par(mar = c(5, 5, 0.5, 4))
-  # Heatmap(as.matrix(dist(x)))
   par(mar = c(5, 5, 0.5, 0.5))
   ScatterPerf(x = delta, perf = perf, xlab = expression(Delta))
   ScatterPerf(x = -pac, perf = perf, xlab = "- PAC")

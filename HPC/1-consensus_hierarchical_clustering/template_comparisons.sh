@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -l walltime=2:00:00
+#PBS -l walltime=5:00:00
 #PBS -l select=1:ncpus=1:mem=1gb
 #PBS -N simul_comp
 #PBS -q med-bio

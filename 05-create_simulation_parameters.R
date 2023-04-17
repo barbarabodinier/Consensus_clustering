@@ -1,5 +1,4 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 simul_study_id <- 4
 

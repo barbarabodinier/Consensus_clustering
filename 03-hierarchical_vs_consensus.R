@@ -1,12 +1,9 @@
 rm(list = ls())
-setwd("~/Dropbox/Consensus_clustering")
 
 library(fake)
 library(sharp)
 library(igraph)
-library(randomcoloR)
 library(colorspace)
-library(aricode)
 
 # Simulation of data with clusters
 set.seed(1)
