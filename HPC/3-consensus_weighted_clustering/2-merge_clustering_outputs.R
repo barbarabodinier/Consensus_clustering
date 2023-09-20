@@ -2,11 +2,12 @@ library(abind)
 
 args <- commandArgs(trailingOnly = TRUE)
 simul_study_id <- as.numeric(args[1])
+algo <- as.character(args[2])
 
 print(paste("ID of the simulation study:", simul_study_id))
 cat("\n")
 
-setwd(paste0("../../Results/Simulations_consensus_hierarchical/Simulations_", simul_study_id))
+setwd(paste0("../../Results/Simulations_consensus_", algo, "/Simulations_", simul_study_id))
 
 myfiles <- list.files(pattern = "Performances")
 params_id_list <- unique(gsub("_.*", "", gsub("Performances_", "", myfiles)))

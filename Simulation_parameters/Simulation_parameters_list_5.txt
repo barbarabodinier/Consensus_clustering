@@ -1,0 +1,4 @@
+"simulation_id" "nc"    "equal_size"    "n_tot" "p"     "ev_xc" "nu_xc" "v_min" "v_max"
+1	5	FALSE   1000    100     0.5     0.2     0	0
+2	5	FALSE   100     1000    0.15    0.2     0	0
+3	4	FALSE   1000    100     0.5     0.2     0	0

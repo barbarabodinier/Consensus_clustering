@@ -22,6 +22,7 @@ simul_study_id <- as.numeric(args[1])
 params_id <- as.numeric(args[2])
 seed <- as.numeric(args[3])
 simulation_id <- paste0(params_id, "_", seed)
+algo <- as.character(args[4])
 
 # Extracting simulation parameters
 params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
@@ -53,11 +54,12 @@ print(paste0("Proportion of contributing features: ", nu_xc))
 print(paste0("v_min: ", v_min))
 print(paste0("v_max: ", v_max))
 print(paste("Simulation ID:", simulation_id))
+print(paste0("Clustering method: ", algo))
 
 # Creating folder of simulation study
 dir.create("Results", showWarnings = FALSE)
-dir.create("Results/Simulations_consensus_pam", showWarnings = FALSE)
-filepath <- paste0("Results/Simulations_consensus_pam/Simulations_", simul_study_id, "/")
+dir.create(paste0("Results/Simulations_consensus_", algo), showWarnings = FALSE)
+filepath <- paste0("Results/Simulations_consensus_", algo, "/Simulations_", simul_study_id, "/")
 dir.create(filepath, showWarnings = FALSE)
 print("Path to results:")
 print(filepath)
@@ -67,7 +69,11 @@ set.seed(seed)
 if (equal_size) {
   n <- rep(1, nc) / sum(rep(1, nc)) * n_tot
 } else {
-  n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
+  if (nc==5) {
+    n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
+  } else {
+    n <- round(c(500, 300, 150, 50) / sum(c(500, 300, 150, 50)) * n_tot)
+  }
 }
 pk <- round(rep(0.2, 5) * p)
 sigma <- SimulateCorrelation(
@@ -89,12 +95,21 @@ simul <- SimulateClustering(
 )
 simul$data <- scale(simul$data)
 
-# Partitioning Around Medoids with G*
-tmptime <- system.time({
-  set.seed(1)
-  mydistance <- stats::dist(x = simul$data, method = "euclidian")
-  myclusters <- cluster::pam(x = mydistance, k = length(n), diss = TRUE, cluster.only = TRUE)
-})
+# Clustering with G*
+if (algo == "hclust") {
+  tmptime <- system.time({
+    mydist <- dist(simul$data)
+    myhclust <- hclust(d = mydist, method = linkage)
+    myclusters <- cutree(myhclust, k = length(n))
+  })
+}
+if (algo == "pam") {
+  tmptime <- system.time({
+    set.seed(1)
+    mydistance <- stats::dist(x = simul$data, method = "euclidian")
+    myclusters <- cluster::pam(x = mydistance, k = length(n), diss = TRUE, cluster.only = TRUE)
+  })
+}
 nperf <- c(
   G = length(n),
   ClusteringPerformance(theta = myclusters, theta_star = simul),
@@ -102,12 +117,19 @@ nperf <- c(
   time = as.numeric(tmptime[1])
 )
 
-# Partitioning Around Medoids with max silhouette score
-silhouette <- SilhouetteScore(x = simul$data, method = "pam")
+# Silhouette score
+silhouette <- InternalCalibration(
+  xdata = simul$data,
+  method = algo, linkage = linkage,
+  index = "silhouette"
+)
 id <- ManualArgmaxId(silhouette)
-set.seed(1)
-mydistance <- stats::dist(x = simul$data, method = "euclidian")
-myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+if (algo == "hclust") {
+  myclusters <- cutree(myhclust, k = id)
+}
+if (algo == "pam") {
+  myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+}
 nperf <- rbind(
   nperf,
   c(
@@ -118,15 +140,67 @@ nperf <- rbind(
   )
 )
 
-# Partitioning Around Medoids with max GAP statistic
+# CH score
+ch <- InternalCalibration(
+  xdata = simul$data,
+  method = algo, linkage = linkage,
+  index = "ch"
+)
+id <- ManualArgmaxId(ch)
+if (algo == "hclust") {
+  myclusters <- cutree(myhclust, k = id)
+}
+if (algo == "pam") {
+  myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+}
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = myclusters, theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
+# DB score
+db <- InternalCalibration(
+  xdata = simul$data,
+  method = algo, linkage = linkage,
+  index = "db"
+)
+id <- ManualArgmaxId(-db)
+if (algo == "hclust") {
+  myclusters <- cutree(myhclust, k = id)
+}
+if (algo == "pam") {
+  myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+}
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = myclusters, theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
+# GAP statistic
 tmptime <- system.time({
-  out <- GapStatistic(xdata = simul$data, method = "pam")
+  out <- GapStatistic(
+    xdata = simul$data,
+    method = algo, linkage = linkage
+  )
 })
 gap <- out$gap
 id <- ManualArgmaxId(gap)
-set.seed(1)
-mydistance <- stats::dist(x = simul$data, method = "euclidian")
-myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+if (algo == "hclust") {
+  myclusters <- cutree(myhclust, k = id)
+}
+if (algo == "pam") {
+  myclusters <- cluster::pam(x = mydistance, k = id, diss = TRUE, cluster.only = TRUE)
+}
 nperf <- rbind(
   nperf,
   c(
@@ -138,15 +212,30 @@ nperf <- rbind(
 )
 
 # Consensus clustering
-tmptime <- system.time({
-  stab <- Clustering(
-    xdata = simul$data,
-    implementation = PAMClustering,
-    K = K,
-    verbose = FALSE,
-    nc = 1:nc_max,
-  )
-})
+if (algo == "hclust") {
+  tmptime <- system.time({
+    stab <- Clustering(
+      xdata = simul$data,
+      implementation = HierarchicalClustering,
+      linkage = linkage,
+      K = K,
+      verbose = FALSE,
+      nc = 1:nc_max,
+    )
+  })
+}
+if (algo == "pam") {
+  tmptime <- system.time({
+    stab <- Clustering(
+      xdata = simul$data,
+      implementation = PAMClustering,
+      linkage = linkage,
+      K = K,
+      verbose = FALSE,
+      nc = 1:nc_max,
+    )
+  })
+}
 
 # Consensus clustering with G*
 nperf <- rbind(
@@ -154,6 +243,54 @@ nperf <- rbind(
   c(
     G = length(n),
     ClusteringPerformance(theta = Clusters(stab, argmax_id = length(n)), theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
+# Silhouette score
+silhouette <- InternalCalibration(
+  xdata = simul$data, stability = stab,
+  index = "silhouette"
+)
+id <- ManualArgmaxId(silhouette)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
+# CH score
+ch <- InternalCalibration(
+  xdata = simul$data, stability = stab,
+  index = "ch"
+)
+id <- ManualArgmaxId(ch)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
+# DB score
+db <- InternalCalibration(
+  xdata = simul$data, stability = stab,
+  index = "db"
+)
+id <- ManualArgmaxId(-db)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul),
     signif = NA,
     time = as.numeric(tmptime[1])
   )
@@ -186,7 +323,10 @@ nperf <- rbind(
 )
 
 # PINS discrepancy
-discrepancy <- PINSDiscrepancy(x = simul$data, stab, method = "pam", linkage = linkage)
+discrepancy <- PINSDiscrepancy(
+  x = simul$data, stab,
+  method = algo, linkage = linkage
+)
 id <- ManualArgmaxId(discrepancy)
 nperf <- rbind(
   nperf,
@@ -200,7 +340,11 @@ nperf <- rbind(
 
 # M3C score (PAC)
 tmptime2 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, method = "pam", objective = "PAC", iters = iters)
+  scores <- MonteCarloScore(
+    x = simul$data, stab,
+    method = algo, linkage = linkage,
+    objective = "PAC", iters = iters
+  )
 })
 rcsi_pac <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_pac)
@@ -216,7 +360,11 @@ nperf <- rbind(
 
 # M3C score (entropy)
 tmptime3 <- system.time({
-  scores <- MonteCarloScore(x = simul$data, stab, method = "pam", objective = "entropy", iters = iters)
+  scores <- MonteCarloScore(
+    x = simul$data, stab,
+    method = algo, linkage = linkage,
+    objective = "entropy", iters = iters
+  )
 })
 rcsi_entropy <- scores$RCSI # criterion to define assignments in their code
 id <- ManualArgmaxId(rcsi_entropy)
@@ -243,8 +391,9 @@ nperf <- rbind(
 
 # Re-formatting output object
 rownames(nperf) <- c(
-  "hclust_star", "hclust_silhouette", "hclust_gap",
-  "consensus_star", "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
+  "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
+  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+  "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
 )
 
 # Saving output object

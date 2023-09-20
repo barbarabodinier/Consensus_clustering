@@ -712,6 +712,7 @@ SparseKMeansClustering <- function(xdata, nc = NULL, Lambda,
   id <- 0
   for (i in 1:n_iter_lambda) {
     for (j in 1:nrow(nc)) {
+#      print(nc[j])
       # Calibrating Lambda
       if (use_permutations) {
         # Running automated calibration from sparcl

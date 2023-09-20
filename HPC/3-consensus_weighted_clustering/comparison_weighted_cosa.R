@@ -15,6 +15,7 @@ simul_study_id <- as.numeric(args[1])
 params_id <- as.numeric(args[2])
 seed <- as.numeric(args[3])
 simulation_id <- paste0(params_id, "_", seed)
+algo <- as.character(args[4])
 
 # Extracting simulation parameters
 params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_parameters_list_", simul_study_id, ".txt"),
@@ -23,6 +24,7 @@ params_list <- read.table(paste0("Scripts/Simulation_parameters/Simulation_param
 
 # Model parameters
 K <- 100
+linkage <- "complete"
 nc_max <- 20
 noit <- 20
 niter <- 10
@@ -47,11 +49,12 @@ print(paste0("Proportion of contributing features: ", nu_xc))
 print(paste0("v_min: ", v_min))
 print(paste0("v_max: ", v_max))
 print(paste("Simulation ID:", simulation_id))
+print(paste0("Clustering method: ", algo))
 
 # Creating folder of simulation study
 dir.create("Results", showWarnings = FALSE)
-dir.create("Results/Simulations_consensus_weighted_hierarchical", showWarnings = FALSE)
-filepath <- paste0("Results/Simulations_consensus_weighted_hierarchical/Simulations_", simul_study_id, "/")
+dir.create(paste0("Results/Simulations_consensus_cosa_", algo), showWarnings = FALSE)
+filepath <- paste0("Results/Simulations_consensus_cosa_", algo, "/Simulations_", simul_study_id, "/")
 dir.create(filepath, showWarnings = FALSE)
 print("Path to results:")
 print(filepath)
@@ -61,34 +64,42 @@ set.seed(seed)
 if (equal_size) {
   n <- rep(1, nc) / sum(rep(1, nc)) * n_tot
 } else {
-  n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
+  if (nc==5) {
+    n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
+  } else {
+    n <- round(c(500, 300, 150, 50) / sum(c(500, 300, 150, 50)) * n_tot)
+  }
 }
 pk <- round(rep(0.2, 5) * p)
 q <- round(nu_xc * p)
 theta_xc <- c(rep(1, q), rep(0, p - q))
-sigma=SimulateCorrelation(pk=pk,
-                          nu_within = 1,
-                          nu_between = 0,
-                          v_within = c(v_min, v_max),
-                          v_between = 0,
-                          v_sign = -1,
-                          pd_strategy = "min_eigenvalue")$sigma
+sigma <- SimulateCorrelation(
+  pk = pk,
+  nu_within = 1,
+  nu_between = 0,
+  v_within = c(v_min, v_max),
+  v_between = 0,
+  v_sign = -1,
+  pd_strategy = "min_eigenvalue"
+)$sigma
 simul <- SimulateClustering(
   n = n,
   pk = pk,
-  sigma=sigma,
+  sigma = sigma,
   ev_xc = ev_xc,
   theta_xc = theta_xc,
   output_matrices = TRUE
 )
 simul$data <- scale(simul$data)
 
-# Hierarchical clustering with G*
-tmptime <- system.time({
-  mydist <- dist(simul$data)
-  myhclust <- hclust(d = mydist, method = "complete")
-  myclusters <- cutree(myhclust, k = length(n))
-})
+# Clustering with G* (unweighted)
+if (algo == "hclust") {
+  tmptime <- system.time({
+    mydist <- dist(simul$data)
+    myhclust <- hclust(d = mydist, method = "complete")
+    myclusters <- cutree(myhclust, k = length(n))
+  })
+}
 nperf <- c(
   G = length(n),
   lambda = "",
@@ -98,40 +109,49 @@ nperf <- c(
   time = as.numeric(tmptime[1])
 )
 
-# Hierarchical clustering with max silhouette score
-silhouette <- SilhouetteScore(x = simul$data, method = "hclust")
-id <- ManualArgmaxId(silhouette)
-myclusters <- cutree(myhclust, k = id)
-nperf <- rbind(
-  nperf,
-  c(
-    G = id,
-    lambda = "",
-    q = "",
-    ClusteringPerformance(theta = myclusters, theta_star = simul),
-    signif = NA,
-    time = as.numeric(tmptime[1])
-  )
-)
+# COSA clustering with G*
+if (algo == "hclust") {
+  Lambda <- LambdaSequence(lmax = 10, lmin = 0.1, cardinal = n_lambda)
+  tmptime <- system.time({
+    single_run <- HierarchicalClustering(
+      xdata = simul$data,
+      nc = length(n),
+      Lambda = Lambda
+    )
+  })
+}
 
-# Hierarchical clustering with max GAP statistic
-tmptime <- system.time({
-  out <- GapStatistic(xdata = simul$data, method = "hclust")
-})
-gap <- out$gap
-id <- ManualArgmaxId(gap)
-myclusters <- cutree(myhclust, k = id)
-nperf <- rbind(
-  nperf,
-  c(
-    G = id,
-    lambda = "",
-    q = "",
-    ClusteringPerformance(theta = myclusters, theta_star = simul),
-    signif = NA,
-    time = as.numeric(tmptime[1])
+# Clustering performance with G* and different lambdas
+for (i in 1:n_lambda) {
+  pseudo_dist <- as.dist(1 - single_run$comembership[, , i])
+  myclusters <- cutree(hclust(d = pseudo_dist), k = length(n))
+  nperf <- rbind(
+    nperf,
+    c(
+      G = length(n),
+      lambda = Lambda[i],
+      q = "",
+      ClusteringPerformance(theta = myclusters, theta_star = simul),
+      signif = NA,
+      time = as.numeric(tmptime[1])
+    )
   )
-)
+}
+
+# Selection performance with G* and different lambdas
+selperf <- NULL
+for (i in 1:n_lambda) {
+  median_weights <- single_run$weight[i, ]
+  selected <- rep(0, ncol(single_run$weight))
+  names(selected) <- colnames(single_run$weight)
+  selected[names(sort(median_weights, decreasing = TRUE))[1:q]] <- 1
+  selperf <- rbind(
+    selperf, SelectionPerformance(
+      theta = selected,
+      theta_star = theta_xc
+    )
+  )
+}
 
 # Consensus clustering (unweighted)
 tmptime <- system.time({
@@ -156,6 +176,7 @@ nperf <- rbind(
     time = as.numeric(tmptime[1])
   )
 )
+selperf <- rbind(selperf, NA)
 
 # Consensus score
 nperf <- rbind(
@@ -169,96 +190,25 @@ nperf <- rbind(
     time = as.numeric(tmptime[1])
   )
 )
+selperf <- rbind(selperf, NA)
 
-# Consensus clustering (sparcl)
-tmptime <- system.time({
-  stab <- Clustering(
-    xdata = simul$data,
-    implementation = SparseHierarchicalClustering,
-    K = K,
-    verbose = FALSE,
-    nc = 1:nc_max,
-    Lambda = LambdaSequence(lmax = 10, lmin = 1.1, cardinal = n_lambda)
-  )
-})
-
-# Consensus clustering with G* (sparcl)
-for (argmax_id in which(stab$nc == length(n))) {
-  nperf <- rbind(
-    nperf,
-    c(
-      G = length(n),
-      lambda = stab$Lambda[argmax_id],
-      q = stab$Q[argmax_id],
-      ClusteringPerformance(theta = Clusters(stab, argmax_id = argmax_id), theta_star = simul),
-      signif = NA,
-      time = as.numeric(tmptime[1])
+# Consensus COSA clustering
+if (algo == "hclust") {
+  tmptime <- system.time({
+    stab <- Clustering(
+      xdata = simul$data,
+      implementation = HierarchicalClustering,
+      K = K,
+      verbose = FALSE,
+      nc = 1:nc_max,
+      Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = n_lambda),
+      noit = noit,
+      niter = niter
     )
-  )
+  })
 }
 
-# Selection with G* (sparcl)
-selperf <- NULL
-for (argmax_id in which(stab$nc == length(n))) {
-  selprop <- stab$selprop[argmax_id, ]
-  median_weights <- apply(stab$Beta[argmax_id, , ], 1, median)
-  tmp <- cbind(selprop, median_weights)
-  tmp <- tmp[order(selprop, median_weights, decreasing = TRUE), ]
-  selected <- rep(0, ncol(stab$Beta))
-  names(selected) <- colnames(stab$Beta)
-  selected[rownames(tmp)[1:q]] <- 1
-  selperf <- rbind(
-    selperf, SelectionPerformance(
-      theta = selected,
-      theta_star = theta_xc
-    )
-  )
-}
-
-# Consensus score
-nperf <- rbind(
-  nperf,
-  c(
-    G = Argmax(stab)[1],
-    lambda = Argmax(stab)[2],
-    q = stab$Q[ArgmaxId(stab)[1]],
-    ClusteringPerformance(theta = stab, theta_star = simul),
-    signif = NA,
-    time = as.numeric(tmptime[1])
-  )
-)
-
-# Selection with consensus score (sparcl)
-argmax_id <- ArgmaxId(stab)[1]
-selprop <- stab$selprop[argmax_id, ]
-median_weights <- apply(stab$Beta[argmax_id, , ], 1, median)
-tmp <- cbind(selprop, median_weights)
-tmp <- tmp[order(selprop, median_weights, decreasing = TRUE), ]
-selected <- rep(0, ncol(stab$Beta))
-names(selected) <- colnames(stab$Beta)
-selected[rownames(tmp)[1:q]] <- 1
-selperf <- rbind(
-  selperf, SelectionPerformance(
-    theta = selected,
-    theta_star = theta_xc
-  )
-)
-
-# Consensus clustering (cosa)
-tmptime <- system.time({
-  stab <- Clustering(
-    xdata = simul$data,
-    implementation = HierarchicalClustering,
-    K = K,
-    verbose = FALSE,
-    nc = 1:nc_max,
-    Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = n_lambda),
-    noit = noit,
-    niter = niter
-  )
-})
-
-# Consensus clustering with G* (cosa)
+# Consensus COSA clustering with G*
 for (argmax_id in which(stab$nc == length(n))) {
   nperf <- rbind(
     nperf,
@@ -273,7 +223,7 @@ for (argmax_id in which(stab$nc == length(n))) {
   )
 }
 
-# Selection with G* (cosa)
+# Selection with G*
 for (argmax_id in which(stab$nc == length(n))) {
   median_weights <- apply(stab$Beta[argmax_id, , ], 1, median)
   selected <- rep(0, ncol(stab$Beta))
@@ -315,14 +265,17 @@ selperf <- rbind(
 
 # Re-formatting output objects
 rownames(nperf) <- c(
-  "hclust_star", "hclust_silhouette", "hclust_gap",
-  "unweighted_star", "unweighted",
-  paste0("sparcl_star_", 1:n_lambda), "sparcl",
-  paste0("cosa_star_", 1:n_lambda), "cosa"
+  "single_run_star",
+  paste0("single_run_cosa_star_", 1:n_lambda),
+  "consensus_star", "consensus",
+  paste0("consensus_cosa_star_", 1:n_lambda),
+  "consensus_cosa"
 )
 rownames(selperf) <- c(
-  paste0("sparcl_star_", 1:n_lambda), "sparcl",
-  paste0("cosa_star_", 1:n_lambda), "cosa"
+  paste0("single_run_cosa_star_", 1:n_lambda),
+  "consensus_star", "consensus",
+  paste0("consensus_cosa_star_", 1:n_lambda),
+  "consensus_cosa"
 )
 
 # Saving output objects

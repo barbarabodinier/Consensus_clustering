@@ -4,47 +4,118 @@ library(colorspace)
 library(openxlsx)
 
 # Simulation parameters
-method <- "hierarchical"
+method <- "hclust"
 # method <- "pam"
-for (simul_study_id in c("2")) {
+# method <- "kmeans"
+# method <- "gmm"
+
+# Creating output folders
+dir.create(paste0("Tables/Simulations_consensus_", method), showWarnings = FALSE)
+dir.create(paste0("Figures/Simulations_consensus_", method), showWarnings = FALSE)
+
+# Loop over the simulation study ID
+for (simul_study_id in c("3")) {
   print(paste0("Simulation study ", simul_study_id))
 
   # Template design
-  mycolours <- lighten(c(
-    "tan",
-    "darkgreen", lighten("darkgreen", amount = 0.3),
-    "orange",
-    darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
-    "navy", lighten("navy", amount = 0.3),
-    "darkred"
-  ),
-  amount = 0.3
-  )
   dimensionality <- c("", "", "")
 
   # Saving table
   continuous_metrics <- c("rand", "ari", "jaccard")
   integer_metrics <- c("G", "time")
   binary_metrics <- "signif"
-  full_names <- c(
-    "G*",
-    "Silhouette",
-    "GAP statistic",
-    "G*",
-    "Delta", "PAC", "PINS discrepancy",
-    "RCSI (PAC)", "RCSI (entropy)",
-    "Consensus score"
-  )
-  names(full_names) <- c(
-    "hclust_star", "hclust_silhouette", "hclust_gap",
-    "consensus_star", "delta", "pac", "pins_discrepancy",
-    "rcsi_pac", "rcsi_entropy", "consensus_score"
-  )
-  if (method == "hierarchical") {
+  if (method=="gmm"){
+    full_names <- c(
+      "G*",
+      "Silhouette",
+      "CH",
+      "DB",
+      "GAP statistic",
+      "BIC",
+      "G*",
+      "Silhouette",
+      "CH",
+      "DB",
+      "Delta",
+      "PAC",
+      "PINS discrepancy",
+      "Consensus score"
+    )
+    names(full_names) <- c(
+      "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap", "single_run_bic",
+      "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+      "delta", "pac", "pins_discrepancy", "consensus_score"
+    )
+    mycolours <- lighten(
+      c(
+        "tan",
+        "darkgreen",
+        lighten("darkgreen", amount = 0.3),
+        lighten("darkgreen", amount = 0.5),
+        "darkorange",
+        lighten("darkorange", amount = 0.3),
+        "tan",
+        "darkgreen",
+        lighten("darkgreen", amount = 0.3),
+        lighten("darkgreen", amount = 0.5),
+        darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
+        "darkred"
+      ),
+      amount = 0.3
+    )
+    zseq <- c(0.5, 6.5, 14.5)
+    id_set=c(1, 6, 14)
+  } else {
+    full_names <- c(
+      "G*",
+      "Silhouette",
+      "CH",
+      "DB",
+      "GAP statistic",
+      "G*",
+      "Silhouette",
+      "CH",
+      "DB",
+      "Delta",
+      "PAC",
+      "PINS discrepancy",
+      "RCSI (PAC)",
+      "RCSI (entropy)",
+      "Consensus score"
+    )
+    names(full_names) <- c(
+      "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
+      "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+      "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
+    )
+    mycolours <- lighten(
+      c(
+        "tan",
+        "darkgreen",
+        lighten("darkgreen", amount = 0.3),
+        lighten("darkgreen", amount = 0.5),
+        "darkorange",
+        "tan",
+        "darkgreen",
+        lighten("darkgreen", amount = 0.3),
+        lighten("darkgreen", amount = 0.5),
+        darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
+        "navy", lighten("navy", amount = 0.3),
+        "darkred"
+      ),
+      amount = 0.3
+    )
+    zseq <- c(0.5, 5.5, 15.5)
+    id_set=c(1, 6, 15)
+  }
+  if (method == "hclust") {
     algo_names <- c("Hierarchical", "Consensus hierarchical")
   }
   if (method == "kmeans") {
     algo_names <- c("K-means", "Consensus K-means")
+  }
+  if (method == "gmm") {
+    algo_names <- c("GMM", "Consensus GMM")
   }
   if (method == "pam") {
     algo_names <- c("PAM", "Consensus PAM")
@@ -117,14 +188,13 @@ for (simul_study_id in c("2")) {
       ylab = myylab, cex.lab = 1.5, xaxt = "n", ylim = ylim, frame = "F", boxwex = 0.35
     )
     abline(h = axTicks(2), lty = 3, col = "grey")
-    zseq <- c(0.5, 3.5, 10.5)
     abline(v = zseq, lty = 2, col = "black")
     boxplot(
       at = xseq, mylist, col = mycolours, boxcol = mycolours, whiskcol = mycolours, staplecol = mycolours, medcol = darken(mycolours, amount = 0.4),
       whisklty = 1, range = 0, las = 1, add = TRUE,
       ylab = myylab, cex.lab = 1.5, xaxt = "n", frame = "F", boxwex = 0.35
     )
-    for (id in c(1, 4, 10)) {
+    for (id in id_set) {
       abline(h = eval(parse(text = paste0("median", id))), col = darken(mycolours[id], amount = 0.4), lty = 2)
     }
     axis(side = 1, at = xseq, labels = full_names[rownames(performances)], las = 2)
