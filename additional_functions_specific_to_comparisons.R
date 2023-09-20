@@ -1,3 +1,8 @@
+StableClusterGap <- function(x, k, stability, ...) {
+  return(list(cluster = Clusters(stability = stability, argmax_id = k)))
+}
+
+
 InternalValidationIndex <- function(xdata, grouping, index = "silhouette") {
   if (index == "silhouette") {
     mysilhouette <- cluster::silhouette(
@@ -23,7 +28,7 @@ InternalValidationIndex <- function(xdata, grouping, index = "silhouette") {
 
 InternalCalibration <- function(xdata, stability = NULL,
                                 nc_max = 20, method = "hclust", linkage = "complete",
-                                index = "silhouette") {
+                                index = "silhouette", iters = 25) {
   if (is.null(stability)) {
     dist <- dist(xdata, method = "euclidian")
     score <- rep(NA, nc_max)
@@ -82,13 +87,24 @@ InternalCalibration <- function(xdata, stability = NULL,
     score <- rep(NA, nc_max)
     nc_list <- stability$nc
     nc_list <- nc_list[which(nc_list != 1)]
-    for (k in nc_list) {
-      myclusters <- Clusters(stability = stability, argmax_id = k)
-      score[k] <- InternalValidationIndex(
-        xdata = xdata,
-        grouping = myclusters,
-        index = index
-      )
+    if (index == "gap") {
+      score <- as.data.frame(clusGap(
+        x = xdata,
+        FUNcluster = StableClusterGap,
+        K.max = max(stability$nc),
+        stability = stability,
+        B = iters,
+        verbose = FALSE
+      )$Tab)$gap
+    } else {
+      for (k in nc_list) {
+        myclusters <- Clusters(stability = stability, argmax_id = k)
+        score[k] <- InternalValidationIndex(
+          xdata = xdata,
+          grouping = myclusters,
+          index = index
+        )
+      }
     }
   }
 
@@ -701,7 +717,7 @@ SparseKMeansClustering <- function(xdata, nc = NULL, Lambda,
     n_iter_lambda <- 1
   } else {
     n_iter_lambda <- nrow(Lambda)
-    Lambda_iter=Lambda
+    Lambda_iter <- Lambda
   }
 
   # Initialisation of array storing co-membership matrices
@@ -716,18 +732,19 @@ SparseKMeansClustering <- function(xdata, nc = NULL, Lambda,
       if (use_permutations) {
         # Running automated calibration from sparcl
         sink(nullfile())
-        myperm <- tryCatch(do.call(sparcl::KMeansSparseCluster.permute, args = c(
-          list(x = xdata, K = nc[j], wbound = Lambda[, 1]),
-          tmp_extra_args
-        )),
-        error = function(e) {
-          message("Not run.")
-        }
+        myperm <- tryCatch(
+          do.call(sparcl::KMeansSparseCluster.permute, args = c(
+            list(x = xdata, K = nc[j], wbound = Lambda[, 1]),
+            tmp_extra_args
+          )),
+          error = function(e) {
+            message("Not run.")
+          }
         )
         sink()
-        if (!is.null(myperm)){
+        if (!is.null(myperm)) {
           Lambda_iter <- cbind(myperm$bestw)
-          
+
           # Running sparse K means clustering
           myclust <- tryCatch(
             do.call(sparcl::KMeansSparseCluster, args = c(
@@ -739,7 +756,7 @@ SparseKMeansClustering <- function(xdata, nc = NULL, Lambda,
             }
           )
         } else {
-          myclust=NULL
+          myclust <- NULL
         }
       } else {
         # Running sparse K means clustering
