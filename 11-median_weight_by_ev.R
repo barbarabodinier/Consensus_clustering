@@ -81,7 +81,7 @@ stab <- Clustering(
     widths = c(1, 2)
   )
   par(mar = c(5, 5, 1, 1))
-  CalibrationPlot(stab, xlab = "Number of clusters", ylab = "Consensus score")
+  CalibrationPlot(stab, xlab = "Number of clusters", ylab = "sharp score")
   WeightBoxplot(stab,
     at = simul$ev, col = ifelse(theta_xc == 1, yes = "red", no = "grey"),
     frame = TRUE, boxwex = 0.007,

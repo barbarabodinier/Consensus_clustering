@@ -1,5 +1,6 @@
 rm(list = ls())
 
+library(sharp)
 library(colorspace)
 
 # Simulation parameters
@@ -42,12 +43,13 @@ for (dataset_id in dataset_list) {
     "Silhouette",
     "CH",
     "DB",
+    "GAP statistic",
     "Delta",
     "PAC",
     "PINS discrepancy",
     "RCSI (PAC)",
     "RCSI (entropy)",
-    "Consensus score"
+    "sharp score"
   )
   full_names <- paste0("'", full_names, " (G = ", performances[, "G"], ")'")
   full_names[c(1, 6)] <- paste0("'G* = ", performances[1, "G"], "'")
@@ -67,14 +69,15 @@ for (dataset_id in dataset_list) {
       "darkgreen",
       lighten("darkgreen", amount = 0.3),
       lighten("darkgreen", amount = 0.5),
+      "darkorange",
       darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
       "navy", lighten("navy", amount = 0.3),
       "darkred"
     ),
     amount = 0.3
   )
-  zseq <- c(0.5, 5.5, 15.5)
-  id_list <- c(1, 6, 15)
+  zseq <- c(0.5, 5.5, 16.5)
+  id_list <- c(1, 6, 16)
 
   pdf(paste0("Figures/Real_data_consensus_", method, "/Plot_unweighted_", metric, "_", dataset_id, ".pdf"),
     width = 10, height = 7
@@ -127,6 +130,6 @@ for (dataset_id in dataset_list) {
   # Loading the results
   stab <- readRDS(paste0("Results/HPC/Real_data_consensus_unweighted_", method, "/Stability_unweighted_", dataset_id, ".rds"))
   par(mar = c(11, 5, 5, 25))
-  CalibrationPlot(stab)
+  CalibrationPlot(stab, ylab="sharp score")
   dev.off()
 }

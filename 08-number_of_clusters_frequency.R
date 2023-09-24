@@ -18,21 +18,22 @@ full_names <- c(
   "Silhouette",
   "CH",
   "DB",
+  "GAP statistic",
   "Delta",
   "PAC",
   "PINS discrepancy",
   "RCSI (PAC)",
   "RCSI (entropy)",
-  "Consensus score"
+  "sharp score"
 )
 names(full_names) <- c(
   "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
-  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db", "consensus_gap",
   "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
 )
 clustering_names <- c(
   rep("SR", 5),
-  rep("C", 10)
+  rep("C", 11)
 )
 mycolours <- lighten(
   c(
@@ -45,6 +46,7 @@ mycolours <- lighten(
     "darkgreen",
     lighten("darkgreen", amount = 0.3),
     lighten("darkgreen", amount = 0.5),
+    "darkorange",
     darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
     "navy", lighten("navy", amount = 0.3),
     "darkred"
@@ -89,7 +91,7 @@ for (simul_id in 1:3) {
   )
   if (simul_id == 1) {
     legend("topright",
-      ncol = 3, bg = "white",
+      ncol = 4, bg = "white", cex = 0.9,
       legend = paste0(clustering_names, ": ", full_names),
       col = mycolours, lty = 1, lwd = mylwd
     )

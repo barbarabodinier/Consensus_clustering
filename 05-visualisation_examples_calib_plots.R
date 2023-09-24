@@ -101,7 +101,7 @@ for (simul_study_id in 1) {
         ManualCalibPlot(rcsi_entropy, ylab = "RCSI (entropy)")
 
         # Consensus score
-        ManualCalibPlot(stab$Sc, ylab = "Consensus score")
+        ManualCalibPlot(stab$Sc, ylab = "sharp score")
       }
     }
     dev.off()

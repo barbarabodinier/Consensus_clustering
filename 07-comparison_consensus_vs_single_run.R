@@ -14,7 +14,7 @@ dir.create(paste0("Tables/Simulations_consensus_", method), showWarnings = FALSE
 dir.create(paste0("Figures/Simulations_consensus_", method), showWarnings = FALSE)
 
 # Loop over the simulation study ID
-for (simul_study_id in c("3")) {
+for (simul_study_id in c("2")) {
   print(paste0("Simulation study ", simul_study_id))
 
   # Template design
@@ -76,16 +76,17 @@ for (simul_study_id in c("3")) {
       "Silhouette",
       "CH",
       "DB",
+      "GAP statistic",
       "Delta",
       "PAC",
       "PINS discrepancy",
       "RCSI (PAC)",
       "RCSI (entropy)",
-      "Consensus score"
+      "sharp score"
     )
     names(full_names) <- c(
       "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
-      "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+      "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db", "consensus_gap",
       "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
     )
     mycolours <- lighten(
@@ -99,14 +100,15 @@ for (simul_study_id in c("3")) {
         "darkgreen",
         lighten("darkgreen", amount = 0.3),
         lighten("darkgreen", amount = 0.5),
+        "darkorange",
         darken("maroon4", amount = 0.3), "maroon4", lighten("maroon4", amount = 0.3),
         "navy", lighten("navy", amount = 0.3),
         "darkred"
       ),
       amount = 0.3
     )
-    zseq <- c(0.5, 5.5, 15.5)
-    id_set=c(1, 6, 15)
+    zseq <- c(0.5, 5.5, 16.5)
+    id_set=c(1, 6, 16)
   }
   if (method == "hclust") {
     algo_names <- c("Hierarchical", "Consensus hierarchical")

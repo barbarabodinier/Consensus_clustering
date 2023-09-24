@@ -1,11 +1,12 @@
 rm(list = ls())
 
+library(sharp)
 library(colorspace)
 
 # Simulation parameters
 # method <- "cosa_hclust"
-# method <- "sparcl_hclust"
 # method <- "sparcl_kmeans"
+# method <- "sparcl_hclust"
 method <- "impacc_hclust"
 metric <- "ari"
 n_lambda <- 10
@@ -30,13 +31,12 @@ if (method == "impacc_hclust") {
       "tan",
       "darkorange",
       "tan",
-      "darkred",
       lighten("navy", amount = seq(0.1, 0.7, length.out = 9))
     ),
     amount = 0.3
   )
 }
-dataset_list <- 6:9
+dataset_list <- 6:10
 
 dir.create(paste0("Figures/Real_data_consensus_", method), showWarnings = FALSE)
 for (dataset_id in dataset_list) {
@@ -44,6 +44,9 @@ for (dataset_id in dataset_list) {
 
   # Loading the results
   performances <- readRDS(paste0("Results/HPC/Real_data_consensus_", method, "/Performances_", dataset_id, ".rds"))
+  if (method=="impacc_hclust"){
+    performances=performances[-which(rownames(performances)=="consensus"),]
+  }
 
   # Defining the algorithm names
   if (method == "cosa_hclust") {
@@ -66,9 +69,9 @@ for (dataset_id in dataset_list) {
       "GAP",
       paste0("lambda[", 1:10, "]*'=", lambda_list[3:12], "'"),
       "G*",
-      "Consensus score",
+      "sharp score",
       paste0("lambda[", 1:10, "]*'=", lambda_list[15:24], "'"),
-      "Consensus score"
+      "sharp score"
     )
     names(full_names) <- c(
       "single_run_star", "single_run_gap",
@@ -87,9 +90,9 @@ for (dataset_id in dataset_list) {
       "G*", "GAP",
       paste0("lambda[", 1:10, "]*'=", lambda_list[3:12], "'"),
       "G*",
-      "Consensus score",
+      "sharp score",
       paste0("lambda[", 1:10, "]*'=", lambda_list[15:24], "'"),
-      "Consensus score"
+      "sharp score"
     )
     names(full_names) <- c(
       "single_run_star", "single_run_gap",
@@ -107,15 +110,14 @@ for (dataset_id in dataset_list) {
     full_names <- c(
       "'G*'", "GAP",
       "'G*'",
-      "Consensus score",
       seq(0.1, 0.9, by = 0.1)
     )
     names(full_names) <- c(
       "single_run_star", "single_run_gap",
-      "consensus_star", "consensus",
+      "consensus_star", 
       paste0("impacc_", seq(1, 9))
     )
-    ids_g=c(2, 4)
+    ids_g=c(2)
     full_names[ids_g] <- paste0("'", full_names[ids_g], " (G = ", performances[ids_g, "G"], ")'")
     full_names[c(1, 3)] <- paste0("'G* = ", performances[1, "G"], "'")
   }
@@ -138,7 +140,7 @@ for (dataset_id in dataset_list) {
     abline(v = zseq, lty = 2, col = "black")
   }
   if (method %in% c("impacc_hclust")) {
-    zseq <- c(0.5, 2.5, 4.5, length(xseq) + 0.5)
+    zseq <- c(0.5, 2.5, 3.5, length(xseq) + 0.5)
     abline(v = zseq, lty = 2, col = "black")
   }
   if (method %in% c("cosa_hclust", "sparcl_hclust", "sparcl_kmeans")) {
@@ -175,8 +177,8 @@ for (dataset_id in dataset_list) {
   }
   if (method %in% c("impacc_hclust")) {
     myline <- 3
-    axis(side = 1, at = xseq[c(5, 13)] + c(-0.25, 0.25), labels = NA, line = myline)
-    axis(side = 1, at = mean(xseq[c(5, 13)]), 
+    axis(side = 1, at = xseq[c(4, 12)] + c(-0.25, 0.25), labels = NA, line = myline)
+    axis(side = 1, at = mean(xseq[c(4, 12)]), 
          labels = paste0("G* = ", performances[1, "G"]), 
          line = myline - 0.5, tick = FALSE)
     # axis(side = 1, at = xseq[c(15, 24)] + c(-0.5, 0.5), labels = NA, line = myline)
@@ -238,6 +240,7 @@ for (dataset_id in dataset_list) {
     stab <- readRDS(paste0("Results/HPC/Real_data_consensus_", method, "/Stability_weighted_", dataset_id, ".rds"))
     par(mar = c(11, 5, 5, 45))
     CalibrationPlot(stab, 
+                    ylab="sharp score",
                     legend=(dataset_id=="6"),
                     ncol=2, 
                     cex.legend = 0.8)

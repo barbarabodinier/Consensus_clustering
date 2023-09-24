@@ -14,6 +14,7 @@ niter <- 10
 max_nc <- 20
 distance <- "euclidian"
 linkage <- "complete"
+to_run <- FALSE
 
 # Loading and preparing the data
 mydata <- fread("Data/Lung_cancer/fig1tree.cdt.tsv", data.table = FALSE)
@@ -63,34 +64,42 @@ dend <- as.dendrogram(myhclust)
 labels_colors(dend) <- subtypes[labels(dend)]
 
 # Consensus hierarchical clustering (unweighted)
-stab_unw <- Clustering(
-  xdata = x,
-  nc = 1:max_nc,
-  distance = distance,
-  implementation = HierarchicalClustering,
-  linkage = linkage,
-  tau = tau
-)
-plot(stab_unw, theta_star = subtypes)
-saveRDS(stab_unw, paste0("Results/Application/Consensus_unweighted_hclust_", distance, "_", tau, ".rds"))
-
-# Consensus hierarchical clustering (weighted)
-system.time({
-  stab_w <- Clustering(
+if (to_run) {
+  stab_unw <- Clustering(
     xdata = x,
     nc = 1:max_nc,
     distance = distance,
     implementation = HierarchicalClustering,
     linkage = linkage,
-    tau = tau,
-    Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = 10),
-    noit = noit,
-    niter = niter,
-    n_cores = 4
+    tau = tau
   )
-})
-table(subtypes, Clusters(stab_w))
-saveRDS(stab_w, paste0("Results/Application/Consensus_weighted_hclust_", distance, "_", tau, ".rds"))
+  plot(stab_unw, theta_star = subtypes)
+  saveRDS(stab_unw, paste0("Results/Application/Consensus_unweighted_hclust_", distance, "_", tau, ".rds"))
+} else {
+  stab_unw <- readRDS(paste0("Results/Application/Consensus_unweighted_hclust_", distance, "_", tau, ".rds"))
+}
+
+# Consensus hierarchical clustering (weighted)
+if (to_run) {
+  system.time({
+    stab_w <- Clustering(
+      xdata = x,
+      nc = 1:max_nc,
+      distance = distance,
+      implementation = HierarchicalClustering,
+      linkage = linkage,
+      tau = tau,
+      Lambda = LambdaSequence(lmax = 10, lmin = 0.1, cardinal = 10),
+      noit = noit,
+      niter = niter,
+      n_cores = 4
+    )
+  })
+  table(subtypes, Clusters(stab_w))
+  saveRDS(stab_w, paste0("Results/Application/Consensus_weighted_hclust_", distance, "_", tau, ".rds"))
+} else {
+  stab_w <- readRDS(paste0("Results/Application/Consensus_weighted_hclust_", distance, "_", tau, ".rds"))
+}
 
 # Figure parameters
 nc_star <- 4
@@ -147,7 +156,10 @@ for (type in c("unweighted", "weighted")) {
       width = 12, height = 12
     )
     par(mar = rep(9, 4))
-    CalibrationPlot(stab, xlab = "G", cex.lab = 2, cex.legend = 1.5)
+    CalibrationPlot(stab,
+      xlab = "G", ylab = "sharp score",
+      cex.lab = 2, cex.legend = 1.5, ncol=2
+    )
     dev.off()
   }
 
@@ -184,7 +196,7 @@ for (type in c("unweighted", "weighted")) {
     }
     box()
     ordered <- Clusters(stab)[colnames(mat)]
-    nc=Argmax(stab)[1]
+    nc <- Argmax(stab)[1]
     for (k in 1:nc) {
       tmpx <- range(which(ordered == unique(ordered)[k]) - 0.5) + c(-0.25, 0.25)
       axis(

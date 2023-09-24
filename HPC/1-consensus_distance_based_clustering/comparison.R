@@ -69,7 +69,7 @@ set.seed(seed)
 if (equal_size) {
   n <- rep(1, nc) / sum(rep(1, nc)) * n_tot
 } else {
-  if (nc==5) {
+  if (nc == 5) {
     n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
   } else {
     n <- round(c(500, 300, 150, 50) / sum(c(500, 300, 150, 50)) * n_tot)
@@ -296,6 +296,22 @@ nperf <- rbind(
   )
 )
 
+# GAP statistic
+gap <- InternalCalibration(
+  xdata = simul$data, stability = stab,
+  index = "gap"
+)
+id <- ManualArgmaxId(gap)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
 # Delta score
 delta <- DeltaAreaCDF(stab)
 id <- ManualArgmaxId(delta)
@@ -392,7 +408,7 @@ nperf <- rbind(
 # Re-formatting output object
 rownames(nperf) <- c(
   "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
-  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db", "consensus_gap",
   "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
 )
 

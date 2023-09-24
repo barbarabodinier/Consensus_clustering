@@ -64,7 +64,7 @@ set.seed(seed)
 if (equal_size) {
   n <- rep(1, nc) / sum(rep(1, nc)) * n_tot
 } else {
-  if (nc==5) {
+  if (nc == 5) {
     n <- round(c(20, 50, 30, 10, 40) / sum(c(20, 50, 30, 10, 40)) * n_tot)
   } else {
     n <- round(c(500, 300, 150, 50) / sum(c(500, 300, 150, 50)) * n_tot)

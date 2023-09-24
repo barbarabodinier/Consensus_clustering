@@ -4,16 +4,16 @@ library(colorspace)
 library(openxlsx)
 
 # Simulation parameters
-type="clustering"
-# type="selection"
-# method <- "cosa_hclust"
-# method <- "sparcl_hclust"
+# type="clustering"
+type="selection"
+method <- "cosa_hclust"
 # method <- "sparcl_kmeans"
-method <- "impacc_hclust"
+# method <- "sparcl_hclust"
+# method <- "impacc_hclust"
 # method <- "sparse_gmm"
 n_lambda <- 10
-simul_study_id="6"
-simul_id=1
+simul_study_id="5"
+simul_id=3
 
 # Template design
 print(paste0("Simulation study ", simul_study_id))
@@ -51,7 +51,6 @@ if (method == "impacc_hclust") {
     c(
       "tan",
       "tan",
-      "darkred",
       lighten("darkgreen", amount = seq(0.1, 0.7, length.out = 9))
     ),
     amount = 0.3
@@ -87,15 +86,21 @@ if (type=="selection"){
   performances <- readRDS(paste0("Results/HPC/Simulations_consensus_", method, "/Simulations_", simul_study_id, "/Performances_", simul_id, "_merged.rds"))
 }
 clustering_performances <- readRDS(paste0("Results/HPC/Simulations_consensus_", method, "/Simulations_", simul_study_id, "/Performances_", simul_id, "_merged.rds"))
+if (method=="impacc_hclust") {
+  clustering_performances=clustering_performances[-which(rownames(clustering_performances)=="consensus"),,]
+  if (type=="clustering") {
+    performances=performances[-which(rownames(performances)=="consensus"),,]
+  }
+}
 if (method == "cosa_hclust") {
   lambda_list <- formatC(as.numeric(clustering_performances[, "lambda", 1]), format = "f", digits = 2)
   full_names <- c(
     "'G*'",
     paste0("lambda[", 1:10, "]*'=", lambda_list[2:11], "'"),
     "'G*'",
-    "'Consensus score'",
+    "'sharp score'",
     paste0("lambda[", 1:10, "]*'=", lambda_list[14:23], "'"),
-    "'Consensus score'"
+    "'sharp score'"
   )
   names(full_names) <- c(
     "single_run_star",
@@ -110,12 +115,12 @@ if (method %in% c("sparcl_hclust", "sparcl_kmeans")) {
   full_names <- c(
     "'G*'",
     paste0("lambda[", 1:10, "]*'=", lambda_list[2:11], "'"),
-    "'GAP statistic'",
+    "lambda[GAP]",
     "'G*'",
-    "'Consensus score'",
+    "'sharp score'",
     paste0("lambda[", 1:10, "]*'=", lambda_list[15:24], "'"),
-    "'GAP statistic'", 
-    "'Consensus score'"
+    "lambda[GAP]",
+    "'sharp score'"
   )
   names(full_names) <- c(
     "single_run_star",
@@ -132,12 +137,11 @@ if (method == "impacc_hclust") {
   full_names <- c(
     "'G*'",
     "'G*'",
-    "'Consensus score'",
     paste0(seq(0.1, 0.9, by = 0.1))
   )
   names(full_names) <- c(
     "single_run_star",
-    "consensus_star", "consensus",
+    "consensus_star", 
     paste0("impacc_", seq(1, 9))
   )
 }
@@ -239,7 +243,7 @@ for (metric in metric_list) {
       mylist <- list(NA, NA)
     }
     if (method=="impacc_hclust"){
-      mylist <- list(NA, NA, NA)
+      mylist <- list(NA, NA)
     }
     if (method%in%c("cosa_hclust", "sparcl_hclust", "sparcl_kmeans")) {
       mylist <- list(NA)
@@ -249,6 +253,12 @@ for (metric in metric_list) {
     mylist <- list()
   }
   clustering_performances <- readRDS(paste0("Results/HPC/Simulations_consensus_", method, "/Simulations_", simul_study_id, "/Performances_", simul_id, "_merged.rds"))
+  if (method=="impacc_hclust") {
+    clustering_performances=clustering_performances[-which(rownames(clustering_performances)=="consensus"),,]
+    if (type=="clustering") {
+    performances=performances[-which(rownames(performances)=="consensus"),,]
+    }
+  }
   
   for (k in 1:nrow(performances)) {
     mylist <- c(mylist, list(as.numeric(performances[k, metric, ])))
@@ -291,7 +301,7 @@ for (metric in metric_list) {
     zseq <- c(0.5, 1.5, 12.5, 14.5, length(xseq) + 0.5)
   }
   if (method=="impacc_hclust"){
-    zseq <- c(0.5, 1.5, 3.5, length(xseq) + 0.5)
+    zseq <- c(0.5, 1.5, 2.5, length(xseq) + 0.5)
   }
   if (method=="sparse_gmm"){
     zseq <- c(0.5, 2.5, 4.5, length(xseq) + 0.5)
@@ -309,7 +319,7 @@ for (metric in metric_list) {
     id_list=c(1, 13, 14, 26)
   }
   if (method=="impacc_hclust"){
-    id_list=c(1, 2, 3)
+    id_list=c(1, 2)
   }
   if (method=="sparse_gmm"){
     id_list=c(1,3,5)
@@ -317,8 +327,11 @@ for (metric in metric_list) {
   if (type=="selection"){
     id_list=id_list[-1]
   }
-  for (id in id_list) {
-    abline(h = eval(parse(text = paste0("median", id))), col = darken(mycolours[id], amount = 0.4), lty = 2)
+  if ((type=="clustering") | (method!="impacc_hclust")){
+    for (id in id_list) {
+      print(id)
+      abline(h = eval(parse(text = paste0("median", id))), col = darken(mycolours[id], amount = 0.4), lty = 2)
+    }
   }
   axis(side = 1, at = xseq, labels = NA)
   for (i in 1:length(tmpfullnames)) {
@@ -347,8 +360,8 @@ for (metric in metric_list) {
   }
   if (method=="impacc_hclust"){
     myline=8
-    axis(side = 1, at = xseq[c(4, 12)] + c(-0.5, 0.5), labels = NA, line = myline)
-    axis(side = 1, at = mean(xseq[c(4, 12)]), labels = "G*", line = myline-0.5, tick = FALSE)
+    axis(side = 1, at = xseq[c(3, 11)] + c(-0.5, 0.5), labels = NA, line = myline)
+    axis(side = 1, at = mean(xseq[c(3, 11)]), labels = "G*", line = myline-0.5, tick = FALSE)
     axis(side = 3, at = zseq, labels = NA)
   }
   if (method=="sparse_gmm"){

@@ -257,3 +257,20 @@ rownames(x) <- names(y) <- paste0("obs", 1:nrow(x))
 ## Saving prepared datasets
 saveRDS(x, "Data/ICU_datasets/prepared/data_9_x.rds")
 saveRDS(y, "Data/ICU_datasets/prepared/data_9_y.rds")
+
+
+# Other single cell data
+
+## Loading the data
+library(SC3)
+x <- t(yan)
+y <- as.character(ann[, 1])
+x <- log2(x + 1)
+
+xvar <- apply(x, 2, var)
+n_genes <- 5000
+x <- x[, sort.list(xvar, decreasing = TRUE)[1:n_genes]]
+
+## Saving prepared datasets
+saveRDS(x, "Data/ICU_datasets/prepared/data_10_x.rds")
+saveRDS(y, "Data/ICU_datasets/prepared/data_10_y.rds")

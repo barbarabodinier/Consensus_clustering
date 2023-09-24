@@ -89,7 +89,7 @@ stab <- Clustering(
     col = c("navy", "white", "darkred"),
     legend_range = c(-1, 1)
   )
-  CalibrationPlot(stab, xlab = "Number of clusters", ylab = "Consensus score")
+  CalibrationPlot(stab, xlab = "Number of clusters", ylab = "sharp score")
   WeightBoxplot(stab,
     col = ifelse(theta_xc == 1, yes = "red", no = "grey"),
     frame = TRUE, boxwex = 0.2,

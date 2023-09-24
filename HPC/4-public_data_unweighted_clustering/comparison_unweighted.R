@@ -230,6 +230,22 @@ nperf <- rbind(
   )
 )
 
+# GAP statistic
+gap <- InternalCalibration(
+  xdata = simul$data, stability = stab,
+  index = "gap"
+)
+id <- ManualArgmaxId(gap)
+nperf <- rbind(
+  nperf,
+  c(
+    G = id,
+    ClusteringPerformance(theta = Clusters(stab, argmax_id = id), theta_star = simul$theta),
+    signif = NA,
+    time = as.numeric(tmptime[1])
+  )
+)
+
 # Delta score
 delta <- DeltaAreaCDF(stab)
 id <- ManualArgmaxId(delta)
@@ -326,7 +342,7 @@ nperf <- rbind(
 # Re-formatting output objects
 rownames(nperf) <- c(
   "single_run_star", "single_run_silhouette", "single_run_ch", "single_run_db", "single_run_gap",
-  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db",
+  "consensus_star", "consensus_silhouette", "consensus_ch", "consensus_db", "consensus_gap",
   "delta", "pac", "pins_discrepancy", "rcsi_pac", "rcsi_entropy", "consensus_score"
 )
 

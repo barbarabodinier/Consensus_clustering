@@ -14,7 +14,7 @@ source("Scripts/additional_functions_specific_to_comparisons.R")
 # Dataset id
 args <- commandArgs(trailingOnly = TRUE)
 dataset_id <- as.numeric(args[1])
-algo=as.character(args[2])
+algo <- as.character(args[2])
 
 # Model parameters
 K <- 100
@@ -142,7 +142,7 @@ for (i in 1:n_lambda) {
 }
 
 # Consensus clustering (unweighted)
-if (algo=="hclust"){
+if (algo == "hclust") {
   tmptime <- system.time({
     stab <- Clustering(
       xdata = simul$data,
@@ -153,7 +153,7 @@ if (algo=="hclust"){
     )
   })
 }
-if (algo=="kmeans") {
+if (algo == "kmeans") {
   tmptime <- system.time({
     stab <- Clustering(
       xdata = simul$data,
